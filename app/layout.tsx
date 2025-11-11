@@ -5,7 +5,6 @@ import { Navbar } from '@/components/Navbar'; // Esto ya estaba
 import { Footer } from '@/components/Footer'; // 1. IMPORTA EL FOOTER
 import Link from 'next/link';
 import { MessageCircle } from 'lucide-react';
-import { PageTransitionWrapper } from '@/components/PageTransitionWrapper';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -87,9 +86,7 @@ export default function RootLayout({
         />
         <Navbar />
 
-        <PageTransitionWrapper>
-          <main className="flex-grow">{children}</main>
-        </PageTransitionWrapper>
+        <main className="flex-grow">{children}</main>
 
         {/* 'flex-grow' hace que el contenido principal ocupe el espacio sobrante */}
 
