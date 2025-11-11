@@ -1,18 +1,22 @@
 import { Hero } from '@/components/Hero';
 import { SocialProof } from '@/components/SocialProof';
-// 1. Importa el nuevo componente
 import { ServicesSummary } from '@/components/ServicesSummary';
+import { FadeIn } from '@/components/FadeIn';
 
 export default function Home() {
   return (
     <>
       <Hero />
-      <SocialProof />
       
-      {/* 2. Usa el nuevo componente */}
-      <ServicesSummary />
+      {/* 2. ENVUELVE LA SECCIÓN DE PRUEBA SOCIAL */}
+      <FadeIn>
+        <SocialProof />
+      </FadeIn>
       
-      {/* La página de inicio está completa */}
+      {/* 3. ENVUELVE LA SECCIÓN DE SERVICIOS */}
+      <FadeIn delay={0.2}>
+        <ServicesSummary />
+      </FadeIn>
     </>
   );
 }

@@ -1,14 +1,24 @@
 import React from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 
 export const Hero = () => {
   return (
     <section className="relative w-full h-[60vh] min-h-[400px] flex items-center justify-center text-center text-white">
-      {/* Fondo (usaremos un color sólido por ahora, luego una imagen) */}
-      <div className="absolute inset-0 bg-gray-900 opacity-80 z-0"></div>
+      {/* Fondo con Imagen */}
+      <Image
+        src="/images/hero-background.jpeg"
+        alt="Oficina limpia y segura"
+        layout="fill"
+        objectFit="cover"
+        quality={80}
+        className="z-0"
+      />
 
+      {/* Filtro oscuro (para que el texto se lea) */}
+      <div className="absolute inset-0 bg-black opacity-60 z-10"></div>
       {/* Contenido */}
-      <div className="relative z-10 p-6">
+      <div className="relative z-20 p-6">
         <h1 className="text-4xl md:text-6xl font-bold mb-4">
           Soluciones Integrales en Limpieza y Seguridad
         </h1>
@@ -20,7 +30,7 @@ export const Hero = () => {
         <div className="space-x-4">
           <Link
             href="/contacto"
-            className="bg-blue-600 text-white px-6 py-3 rounded-full text-lg font-semibold hover:bg-blue-700 transition duration-300"
+            className="bg-brand text-white px-6 py-3 rounded-full text-lg font-semibold hover:bg-brand-hover transition duration-300"
           >
             Solicitar Cotización
           </Link>

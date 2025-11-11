@@ -1,26 +1,37 @@
 @import "tailwindcss";
 
+/* 1. Definición de variables de color */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  /* Paleta de Marca */
+  --color-brand: #004a99; /* Este es nuestro "Berboz Blue" */
+  --color-brand-hover: #003a7a; /* Un tono más oscuro para 'hover' */
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Paleta Modo Claro (Por defecto) */
+  --background: #ffffff; /* Fondo blanco puro */
+  --foreground: #111827; /* Texto gris muy oscuro (en lugar de negro) */
+  --muted: #6b7280;      /* Texto secundario/apagado */
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* Paleta Modo Oscuro */
+    --background: #030712; /* Fondo casi negro */
+    --foreground: #f9fafb; /* Texto casi blanco */
+    --muted: #9ca3af;      /* Texto secundario/apagado */
   }
 }
 
+/* 2. Decirle a Tailwind que use nuestras variables */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-brand: var(--color-brand);
+  --color-brand-hover: var(--color-brand-hover);
+}
+
+/* 3. Aplicar el fondo y color base */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }
