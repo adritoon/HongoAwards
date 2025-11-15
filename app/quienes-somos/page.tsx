@@ -34,12 +34,7 @@ export default function QuienesSomosPage() {
       <FadeIn delay={0.1}>
         <MissionVision />
       </FadeIn>
-      
-      {/* 4. ENVUELVE LA SECCIÓN 3 (con más retraso) */}
-      <FadeIn delay={0.2}>
-        <Team />
-      </FadeIn>
-      
+    
     </div>
   );
 }

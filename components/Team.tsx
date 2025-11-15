@@ -28,7 +28,7 @@ export const Team = () => {
               height={200}
               className="w-48 h-48 rounded-full mx-auto mb-4 object-cover bg-foreground/10"
             />
-            <h3 className="text-xl font-semibold">Frank Boza</h3>
+            <h3 className="text-xl font-semibold">-</h3>
             <p className="text-foreground/70">Administrador</p>
           </div>
 
@@ -41,7 +41,7 @@ export const Team = () => {
               height={200}
               className="w-48 h-48 rounded-full mx-auto mb-4 object-cover bg-foreground/10"
             />
-            <h3 className="text-xl font-semibold">Marycelia Berna</h3>
+            <h3 className="text-xl font-semibold">-</h3>
             <p className="text-foreground/70">Gerente Comercial</p>
           </div>
 
@@ -54,7 +54,7 @@ export const Team = () => {
               height={200}
               className="w-48 h-48 rounded-full mx-auto mb-4 object-cover bg-foreground/10"
             />
-            <h3 className="text-xl font-semibold">Luis Quispe</h3>
+            <h3 className="text-xl font-semibold">-</h3>
             <p className="text-foreground/70">Contador</p>
           </div>
 
@@ -67,7 +67,7 @@ export const Team = () => {
               height={200}
               className="w-48 h-48 rounded-full mx-auto mb-4 object-cover bg-foreground/10"
             />
-            <h3 className="text-xl font-semibold">Dante Wong</h3>
+            <h3 className="text-xl font-semibold">-</h3>
             <p className="text-foreground/70">Asesor Legal</p>
           </div>
 
