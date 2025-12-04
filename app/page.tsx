@@ -115,26 +115,26 @@ const CATEGORIES = [
     restricted: false
   },
   { 
+    id: 'cat_sub', 
+    name: 'Mejor Sub', 
+    icon: Star, 
+    desc: 'El suscriptor legendario.',
+    type: 'text',
+    restricted: true    // 🔒 SOLO MODS ELIGEN
+  },
+  { 
     id: 'cat_artist', 
     name: 'Artista de la Comu', 
     icon: Paintbrush, 
     desc: 'Mejores fanarts o edits.',
     type: 'text',
-    restricted: false
+    restricted: false 
   },
   { 
     id: 'cat_mod', 
     name: 'Mod del Año', 
     icon: Users, 
     desc: 'La espada y el escudo del chat.',
-    type: 'text',
-    restricted: true    // 🔒 SOLO MODS
-  },
-  { 
-    id: 'cat_sub', 
-    name: 'Mejor Sub', 
-    icon: Star, 
-    desc: 'El suscriptor legendario.',
     type: 'text',
     restricted: true    // 🔒 SOLO MODS
   },
@@ -244,8 +244,8 @@ const ToastContainer = ({ toasts, removeToast }: any) => (
 
 const Button = ({ children, onClick, variant = 'primary', className = '', disabled = false, icon: Icon }: any) => {
   const variants: any = {
-    // CAMBIO: Violetas -> Rosas
-    primary: "bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white shadow-[0_0_20px_rgba(236,72,153,0.5)] border border-pink-400/20",
+    // ROSA NEÓN (Pink-600 to Rose-500)
+    primary: "bg-gradient-to-r from-pink-600 to-rose-500 hover:from-pink-500 hover:to-rose-400 text-white shadow-[0_0_20px_rgba(236,72,153,0.5)] border border-pink-400/20",
     secondary: "bg-slate-800 hover:bg-slate-700 text-white border border-slate-600",
     outline: "bg-transparent border border-white/20 text-white hover:bg-white/10",
     success: "bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-500/30",
@@ -266,45 +266,24 @@ const Button = ({ children, onClick, variant = 'primary', className = '', disabl
   );
 };
 
-// --- GLITCH TEXT ANIMADO (VFX PARA FONDO OSCURO) ---
+// --- GLITCH ANIMADO (FONDO OSCURO) ---
 const GlitchTextAnimated = ({ text, size = "text-6xl" }: { text: string, size?: string }) => {
   return (
     <div className={`relative font-black uppercase italic tracking-tighter ${size} text-white group select-none`}>
-      {/* Capa Roja: Animación de "tembleque" aleatorio */}
       <motion.span 
         className="absolute top-0 left-0 -ml-1 opacity-70 text-red-500 mix-blend-screen"
-        animate={{ 
-          x: [0, -2, 2, -1, 0],
-          y: [0, 1, -1, 0]
-        }}
-        transition={{ 
-          duration: 0.2, 
-          repeat: Infinity, 
-          repeatType: "mirror",
-          repeatDelay: 3 // Pausa entre glitches
-        }}
+        animate={{ x: [0, -2, 2, -1, 0], y: [0, 1, -1, 0] }}
+        transition={{ duration: 0.2, repeat: Infinity, repeatType: "mirror", repeatDelay: 3 }}
       >
         {text}
       </motion.span>
-      
-      {/* Capa Cian: Animación inversa */}
       <motion.span 
         className="absolute top-0 left-0 ml-1 opacity-70 text-cyan-500 mix-blend-screen"
-        animate={{ 
-          x: [0, 2, -2, 1, 0],
-          y: [0, -1, 1, 0]
-        }}
-        transition={{ 
-          duration: 0.2, 
-          repeat: Infinity, 
-          repeatType: "mirror",
-          repeatDelay: 2
-        }}
+        animate={{ x: [0, 2, -2, 1, 0], y: [0, -1, 1, 0] }}
+        transition={{ duration: 0.2, repeat: Infinity, repeatType: "mirror", repeatDelay: 2 }}
       >
         {text}
       </motion.span>
-      
-      {/* Texto Principal */}
       <span className="relative z-10">{text}</span>
     </div>
   );
@@ -318,7 +297,6 @@ const NominationThumbnail = ({ nom, categoryType, size = 'large' }: { nom: any, 
 
   useEffect(() => { setError(false); }, [displayImage]);
 
-  // Caso 1: Imagen válida
   if (displayImage && !error) {
     return (
        <div className="w-full h-full bg-slate-900 flex items-center justify-center overflow-hidden">
@@ -332,11 +310,11 @@ const NominationThumbnail = ({ nom, categoryType, size = 'large' }: { nom: any, 
     );
   }
 
-  // Caso 2: Categoría Texto (Centrado + Icono de Fondo)
   if (categoryType === 'text') {
     return (
       <div className={`w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900 transition-transform duration-500 ${size === 'large' ? 'group-hover:scale-110' : ''}`}>
          <div className="relative z-10 text-center p-4">
+            {/* Texto Rosa Neón */}
             <div className={`${size === 'large' ? 'text-7xl' : 'text-3xl'} font-black text-pink-500 select-none`}>
               {nom.title.charAt(0).toUpperCase()}
             </div>
@@ -350,7 +328,6 @@ const NominationThumbnail = ({ nom, categoryType, size = 'large' }: { nom: any, 
     );
   }
 
-  // Caso 3: Fallback Video
   return (
     <div className={`w-full h-full flex flex-col items-center justify-center gap-2 transition-transform duration-500
       ${size === 'large' ? 'bg-gradient-to-br group-hover:scale-110' : ''}
@@ -383,82 +360,53 @@ const PhaseStepper = ({ currentPhase }: { currentPhase: number }) => {
   ];
 
   return (
-    <div className="w-full max-w-2xl mx-auto mb-12">
-      <div className="relative flex justify-between items-center">
+    <div className="w-full max-w-2xl mx-auto mb-12 relative">
+      <div className="relative flex justify-between items-start">
+        
+        {/* --- BARRA CONECTORA CORREGIDA --- */}
+        {/* Posicionada con left-5 y right-5 para alinearse al centro exacto de los círculos (que son w-10) */}
+        <div className="absolute top-5 left-5 right-5 h-1 bg-slate-800 -z-10 rounded-full transform -translate-y-1/2">
+           <motion.div 
+             className="h-full bg-gradient-to-r from-pink-600 to-rose-500 rounded-full"
+             initial={{ width: "0%" }}
+             animate={{ width: `${(currentPhase / (steps.length - 1)) * 100}%` }}
+             transition={{ duration: 0.5, delay: 0.2 }}
+           />
+        </div>
 
-        {/* --- BARRA GRIS --- */}
-        <div className="absolute left-0 right-0 top-1/2 h-1 bg-slate-800 rounded-full" />
-
-        {/* --- BARRA ROSA --- */}
-        <motion.div
-          className="absolute left-0 top-1/2 h-1 bg-gradient-to-r from-pink-600 to-rose-500 rounded-full"
-          initial={{ width: "0%" }}
-          animate={{ width: `${(currentPhase / (steps.length - 1)) * 100}%` }}
-          transition={{ duration: 0.5 }}
-          style={{ zIndex: 5 }}
-        />
-
-        {/* --- CONECTORES ENTRE CÍRCULOS (DEBAJO DE LOS CÍRCULOS) --- */}
-        {steps.map((_, idx) =>
-          idx > 0 ? (
-            <div
-              key={`line-${idx}`}
-              className="absolute top-1/2"
-              style={{
-                left: `calc(${(idx - 1) * (100 / (steps.length - 1))}% + 20px)`,
-                width: `calc(${100 / (steps.length - 1)}% - 40px)`,
-                height: "4px",
-                backgroundColor: idx <= currentPhase ? "#ec4899" : "#1e293b",
-                zIndex: 6
-              }}
-            />
-          ) : null
-        )}
-
-        {/* --- CÍRCULOS --- */}
+        {/* STEPS */}
         {steps.map((step, idx) => {
           const isActive = idx === currentPhase;
           const isCompleted = idx < currentPhase;
-
           return (
-            <div
-              key={step.id}
-              className="relative flex flex-col items-center"
-              style={{ zIndex: 10 }}
-            >
-              <motion.div
-                className={`
-                  w-10 h-10 rounded-full flex items-center justify-center border-4
-                  ${isActive
-                    ? "bg-slate-900 border-pink-500 text-pink-400 shadow-[0_0_20px_rgba(236,72,153,0.5)]"
-                    : isCompleted
-                    ? "bg-pink-600 border-pink-600 text-white"
-                    : "bg-slate-900 border-slate-700 text-slate-600"
-                  }
+            <div key={step.id} className="flex flex-col items-center gap-2 z-10">
+              <motion.div 
+                className={`w-10 h-10 rounded-full flex items-center justify-center border-4 transition-colors
+                  ${isActive ? 'bg-slate-900 border-pink-500 text-pink-400 shadow-[0_0_20px_rgba(236,72,153,0.5)]' : 
+                    isCompleted ? 'bg-pink-600 border-pink-600 text-white' : 'bg-slate-900 border-slate-700 text-slate-600'}
                 `}
                 animate={{ scale: isActive ? 1.2 : 1 }}
               >
                 {isCompleted ? <Check size={16} /> : <span className="font-bold text-sm">{idx + 1}</span>}
               </motion.div>
-
-              <div className="mt-2 text-xs font-bold uppercase tracking-wider text-center text-slate-500">
-                {step.label}
+              <div className="text-center">
+                <div className={`text-xs font-bold uppercase tracking-wider ${isActive ? 'text-white' : 'text-slate-500'}`}>
+                  {step.label}
+                </div>
               </div>
             </div>
-          );
+          )
         })}
       </div>
     </div>
   );
 };
 
-
 const CountdownDisplay = ({ targetDate, label }: { targetDate: Date, label: string }) => {
   const timeLeft = useCountdown(targetDate);
   return (
     <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 flex items-center justify-between max-w-md mx-auto mb-8">
       <div className="flex items-center gap-3">
-        {/* CAMBIO: Icono Rosa */}
         <div className="p-2 bg-pink-500/10 rounded-lg text-pink-400">
           <Clock size={20} />
         </div>
@@ -520,6 +468,12 @@ const LandingPage = ({ onLogin }: { onLogin: () => void }) => {
               VER CALENDARIO
             </Button>
           </div>
+          
+          <div className="pt-4 flex items-center justify-center gap-2 text-slate-500 text-xs opacity-80">
+            <ShieldAlert size={14} className="text-emerald-500" />
+            <span>Autenticación segura vía Google. No almacenamos contraseñas.</span>
+          </div>
+
         </motion.div>
       </section>
 
@@ -641,12 +595,14 @@ const NominationForm = ({ categories, onSubmit, existing, isMod, onApprove, onDe
           )}
 
           <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+            {/* CAMBIO: Icono rosa */}
             <Send className="text-pink-500" /> Nueva Nominación
           </h3>
           <div className="space-y-4">
             <div>
               <label className="text-sm font-bold text-slate-400">Categoría</label>
               <select 
+                // CAMBIO: Borde rosa en focus
                 className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white mt-1 focus:border-pink-500 outline-none transition-colors"
                 value={form.cat}
                 onChange={e => setForm({...form, cat: e.target.value, title: '', url: ''})}
@@ -819,6 +775,7 @@ const VotingGrid = ({ categories, nominations, userVotes, onVote }: any) => {
         return (
           <div key={cat.id} className="scroll-mt-24">
             <div className="flex items-center gap-4 mb-6 border-b border-slate-800 pb-4">
+              {/* CAMBIO: Icono rosa */}
               <cat.icon className="text-pink-500 w-8 h-8" />
               <div>
                 <h3 className="text-2xl font-bold text-white uppercase">{cat.name}</h3>
@@ -840,6 +797,7 @@ const VotingGrid = ({ categories, nominations, userVotes, onVote }: any) => {
                     className={`relative group rounded-xl overflow-hidden border transition-all ${
                       hasVoted 
                       ? 'opacity-60 grayscale bg-slate-900 border-slate-800' 
+                      // CAMBIO: Hover border y shadow rosa
                       : 'bg-slate-800/50 border-slate-700 hover:border-pink-500 hover:shadow-[0_0_30px_rgba(236,72,153,0.2)]'
                     }`}
                   >
@@ -854,6 +812,7 @@ const VotingGrid = ({ categories, nominations, userVotes, onVote }: any) => {
 
                       {!hasVoted && (
                         <div 
+                          // CAMBIO: Overlay rosa
                           className="absolute inset-0 bg-pink-600/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10" 
                           onClick={() => {
                             onVote(cat.id, nom.id);
