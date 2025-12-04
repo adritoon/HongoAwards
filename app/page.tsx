@@ -33,6 +33,20 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// --- ICONO DE GOOGLE PERSONALIZADO ---
+const GoogleIcon = ({ size = 20, className = "" }: { size?: number, className?: string }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="currentColor" 
+    xmlns="http://www.w3.org/2000/svg" 
+    className={className}
+  >
+    <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .533 5.347.533 12S5.867 24 12.48 24c3.44 0 6.013-1.133 8.027-3.227C22.613 18.68 23.28 15.707 23.28 13.373c0-.92-.08-1.827-.213-2.453H12.48z" />
+  </svg>
+);
+
 // --- 1. CONFIGURACIÓN FIREBASE ---
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -352,7 +366,7 @@ const LandingPage = ({ onLogin }: { onLogin: () => void }) => {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
-            <Button onClick={onLogin} variant="primary" icon={Twitch} className="text-lg px-8 py-4">
+            <Button onClick={onLogin} variant="primary" icon={GoogleIcon} className="text-lg px-8 py-4">
               INGRESAR CON GOOGLE
             </Button>
             <Button 
