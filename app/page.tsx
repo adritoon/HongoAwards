@@ -29,11 +29,11 @@ import {
   Trophy, Lock, Zap, User, Send, CheckCircle, Crown, 
   Settings, LogOut, Twitch, Calendar, ArrowRight, Play, Star,
   AlertTriangle, ExternalLink, Image as ImageIcon, Trash2, Check, Clock, X, ShieldAlert,
-  Gamepad2, Users, AlertCircle, Ghost, Heart, MessageSquare, Mic, Skull
+  Gamepad2, Users, AlertCircle, Ghost, Heart, MessageSquare, Mic, Skull, Gem, Sparkles, Paintbrush
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// --- ICONO DE GOOGLE PERSONALIZADO ---
+// --- ICONO DE GOOGLE ---
 const GoogleIcon = ({ size = 20, className = "" }: { size?: number, className?: string }) => (
   <svg 
     width={size} 
@@ -69,7 +69,7 @@ const PHASE_DATES = {
   galaStart: new Date('2025-12-31T20:00:00')
 };
 
-// DEFINICIÓN DE CATEGORÍAS (LISTA COMPLETA)
+// DEFINICIÓN DE CATEGORÍAS
 const CATEGORIES = [
   // --- CLIPS Y MOMENTOS ---
   { 
@@ -105,19 +105,19 @@ const CATEGORIES = [
     restricted: false
   },
   
-  // --- COMUNIDAD Y CHAT ---
+  // --- COMUNIDAD ---
   { 
-    id: 'cat_mvp', 
-    name: 'MVP del Chat', 
-    icon: Star, 
-    desc: 'El viewer que siempre está ahí apoyando.',
+    id: 'cat_vip', 
+    name: 'Mejor VIP', 
+    icon: Gem, 
+    desc: 'El VIP que más aporta al stream.',
     type: 'text',
     restricted: false
   },
   { 
     id: 'cat_artist', 
-    name: 'Artista de la Comunidad', 
-    icon: Heart, 
+    name: 'Artista de la Comu', 
+    icon: Paintbrush, 
     desc: 'Mejores fanarts o edits.',
     type: 'text',
     restricted: false
@@ -130,13 +130,21 @@ const CATEGORIES = [
     type: 'text',
     restricted: true    // 🔒 SOLO MODS
   },
+  { 
+    id: 'cat_sub', 
+    name: 'Mejor Sub', 
+    icon: Star, 
+    desc: 'El suscriptor legendario.',
+    type: 'text',
+    restricted: true    // 🔒 SOLO MODS
+  },
 
   // --- CONTENIDO GENERAL ---
   { 
     id: 'cat_game', 
     name: 'Juego del Año', 
     icon: Gamepad2, 
-    desc: 'El vicio supremo donde pasamos más horas.',
+    desc: 'El vicio supremo.',
     type: 'text',       
     restricted: false
   },
@@ -150,11 +158,11 @@ const CATEGORIES = [
   },
   { 
     id: 'cat_event', 
-    name: 'Mejor Evento/Especial', 
+    name: 'Mejor Evento', 
     icon: Mic, 
     desc: 'El stream especial más currado.',
     type: 'text',       
-    restricted: true // A veces mejor que lo decidan mods para no repetir
+    restricted: true 
   }
 ];
 
@@ -236,7 +244,8 @@ const ToastContainer = ({ toasts, removeToast }: any) => (
 
 const Button = ({ children, onClick, variant = 'primary', className = '', disabled = false, icon: Icon }: any) => {
   const variants: any = {
-    primary: "bg-violet-600 hover:bg-violet-500 text-white shadow-[0_0_20px_rgba(124,58,237,0.5)] border border-violet-400/20",
+    // CAMBIO: Violetas -> Rosas
+    primary: "bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white shadow-[0_0_20px_rgba(236,72,153,0.5)] border border-pink-400/20",
     secondary: "bg-slate-800 hover:bg-slate-700 text-white border border-slate-600",
     outline: "bg-transparent border border-white/20 text-white hover:bg-white/10",
     success: "bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-500/30",
@@ -257,7 +266,7 @@ const Button = ({ children, onClick, variant = 'primary', className = '', disabl
   );
 };
 
-// --- GLITCH TEXT ANIMADO V2 (CON JITTER REAL) ---
+// --- GLITCH TEXT ANIMADO (VFX PARA FONDO OSCURO) ---
 const GlitchTextAnimated = ({ text, size = "text-6xl" }: { text: string, size?: string }) => {
   return (
     <div className={`relative font-black uppercase italic tracking-tighter ${size} text-white group select-none`}>
@@ -272,7 +281,7 @@ const GlitchTextAnimated = ({ text, size = "text-6xl" }: { text: string, size?: 
           duration: 0.2, 
           repeat: Infinity, 
           repeatType: "mirror",
-          repeatDelay: 3 // Pausa entre glitches para no marear
+          repeatDelay: 3 // Pausa entre glitches
         }}
       >
         {text}
@@ -309,7 +318,7 @@ const NominationThumbnail = ({ nom, categoryType, size = 'large' }: { nom: any, 
 
   useEffect(() => { setError(false); }, [displayImage]);
 
-  // Caso 1: Imagen válida (Custom o YouTube)
+  // Caso 1: Imagen válida
   if (displayImage && !error) {
     return (
        <div className="w-full h-full bg-slate-900 flex items-center justify-center overflow-hidden">
@@ -323,27 +332,25 @@ const NominationThumbnail = ({ nom, categoryType, size = 'large' }: { nom: any, 
     );
   }
 
-  // Caso 2: Categoría de TEXTO sin imagen (Juego, Mod, etc)
+  // Caso 2: Categoría Texto (Centrado + Icono de Fondo)
   if (categoryType === 'text') {
     return (
-      <div className={`w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 transition-transform duration-500 ${size === 'large' ? 'group-hover:scale-110' : ''}`}>
-         <div className="text-center p-4">
-           {/* Inicial Gigante */}
-           <div className={`${size === 'large' ? 'text-7xl' : 'text-3xl'} font-black text-slate-800 drop-shadow-[0_2px_0_rgba(255,255,255,0.1)] select-none`}>
-             {nom.title.charAt(0).toUpperCase()}
-           </div>
-           {/* Icono de fondo sutil */}
-           {size === 'large' && (
-             <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
-                <Gamepad2 size={100} />
-             </div>
-           )}
+      <div className={`w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900 transition-transform duration-500 ${size === 'large' ? 'group-hover:scale-110' : ''}`}>
+         <div className="relative z-10 text-center p-4">
+            <div className={`${size === 'large' ? 'text-7xl' : 'text-3xl'} font-black text-pink-500 select-none`}>
+              {nom.title.charAt(0).toUpperCase()}
+            </div>
          </div>
+         {size === 'large' && (
+           <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
+              <Sparkles size={80} className="text-pink-500" />
+           </div>
+         )}
       </div>
     );
   }
 
-  // Caso 3: Categoría de VIDEO sin miniatura (Twitch/Kick fallback)
+  // Caso 3: Fallback Video
   return (
     <div className={`w-full h-full flex flex-col items-center justify-center gap-2 transition-transform duration-500
       ${size === 'large' ? 'bg-gradient-to-br group-hover:scale-110' : ''}
@@ -377,47 +384,82 @@ const PhaseStepper = ({ currentPhase }: { currentPhase: number }) => {
 
   return (
     <div className="w-full max-w-2xl mx-auto mb-12">
-      <div className="flex justify-between items-center relative">
-        <div className="absolute left-0 right-0 top-1/2 h-1 bg-slate-800 -z-10 rounded-full" />
-        <motion.div 
-          className="absolute left-0 top-1/2 h-1 bg-gradient-to-r from-violet-600 to-fuchsia-500 -z-10 rounded-full"
+      <div className="relative flex justify-between items-center">
+
+        {/* --- BARRA GRIS --- */}
+        <div className="absolute left-0 right-0 top-1/2 h-1 bg-slate-800 rounded-full" />
+
+        {/* --- BARRA ROSA --- */}
+        <motion.div
+          className="absolute left-0 top-1/2 h-1 bg-gradient-to-r from-pink-600 to-rose-500 rounded-full"
           initial={{ width: "0%" }}
           animate={{ width: `${(currentPhase / (steps.length - 1)) * 100}%` }}
-          transition={{ duration: 0.5, delay: 0.2 }}
+          transition={{ duration: 0.5 }}
+          style={{ zIndex: 5 }}
         />
+
+        {/* --- CONECTORES ENTRE CÍRCULOS (DEBAJO DE LOS CÍRCULOS) --- */}
+        {steps.map((_, idx) =>
+          idx > 0 ? (
+            <div
+              key={`line-${idx}`}
+              className="absolute top-1/2"
+              style={{
+                left: `calc(${(idx - 1) * (100 / (steps.length - 1))}% + 20px)`,
+                width: `calc(${100 / (steps.length - 1)}% - 40px)`,
+                height: "4px",
+                backgroundColor: idx <= currentPhase ? "#ec4899" : "#1e293b",
+                zIndex: 6
+              }}
+            />
+          ) : null
+        )}
+
+        {/* --- CÍRCULOS --- */}
         {steps.map((step, idx) => {
           const isActive = idx === currentPhase;
           const isCompleted = idx < currentPhase;
+
           return (
-            <div key={step.id} className="flex flex-col items-center gap-2">
-              <motion.div 
-                className={`w-10 h-10 rounded-full flex items-center justify-center border-4 transition-colors z-10
-                  ${isActive ? 'bg-slate-900 border-violet-500 text-violet-400 shadow-[0_0_20px_rgba(124,58,237,0.5)]' : 
-                    isCompleted ? 'bg-violet-600 border-violet-600 text-white' : 'bg-slate-900 border-slate-700 text-slate-600'}
+            <div
+              key={step.id}
+              className="relative flex flex-col items-center"
+              style={{ zIndex: 10 }}
+            >
+              <motion.div
+                className={`
+                  w-10 h-10 rounded-full flex items-center justify-center border-4
+                  ${isActive
+                    ? "bg-slate-900 border-pink-500 text-pink-400 shadow-[0_0_20px_rgba(236,72,153,0.5)]"
+                    : isCompleted
+                    ? "bg-pink-600 border-pink-600 text-white"
+                    : "bg-slate-900 border-slate-700 text-slate-600"
+                  }
                 `}
                 animate={{ scale: isActive ? 1.2 : 1 }}
               >
                 {isCompleted ? <Check size={16} /> : <span className="font-bold text-sm">{idx + 1}</span>}
               </motion.div>
-              <div className="text-center">
-                <div className={`text-xs font-bold uppercase tracking-wider ${isActive ? 'text-white' : 'text-slate-500'}`}>
-                  {step.label}
-                </div>
+
+              <div className="mt-2 text-xs font-bold uppercase tracking-wider text-center text-slate-500">
+                {step.label}
               </div>
             </div>
-          )
+          );
         })}
       </div>
     </div>
   );
 };
 
+
 const CountdownDisplay = ({ targetDate, label }: { targetDate: Date, label: string }) => {
   const timeLeft = useCountdown(targetDate);
   return (
     <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 flex items-center justify-between max-w-md mx-auto mb-8">
       <div className="flex items-center gap-3">
-        <div className="p-2 bg-violet-500/10 rounded-lg text-violet-400">
+        {/* CAMBIO: Icono Rosa */}
+        <div className="p-2 bg-pink-500/10 rounded-lg text-pink-400">
           <Clock size={20} />
         </div>
         <span className="text-sm font-bold text-slate-400 uppercase tracking-wide">{label}</span>
@@ -442,8 +484,8 @@ const LandingPage = ({ onLogin }: { onLogin: () => void }) => {
     <div className="flex flex-col min-h-screen">
       <section className="relative h-screen flex flex-col items-center justify-center text-center px-4 overflow-hidden">
         <div className="absolute inset-0 z-0">
-           <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-violet-950/20 to-slate-950" />
-           <div className="w-full h-full opacity-20 bg-[radial-gradient(#4c1d95_1px,transparent_1px)] [background-size:16px_16px]" />
+           <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-pink-950/20 to-slate-950" />
+           <div className="w-full h-full opacity-20 bg-[radial-gradient(#831843_1px,transparent_1px)] [background-size:16px_16px]" />
         </div>
 
         <motion.div 
@@ -453,12 +495,11 @@ const LandingPage = ({ onLogin }: { onLogin: () => void }) => {
           className="relative z-10 space-y-6 max-w-4xl"
         >
           <div className="flex items-center justify-center gap-2 mb-4">
-             <span className="px-3 py-1 border border-violet-500/50 rounded-full text-violet-300 text-xs font-mono bg-violet-500/10 uppercase tracking-widest">
+             <span className="px-3 py-1 border border-pink-500/50 rounded-full text-pink-300 text-xs font-mono bg-pink-500/10 uppercase tracking-widest">
                Edición 2025
              </span>
           </div>
           
-          {/* AQUÍ ESTÁ EL NUEVO COMPONENTE CON ANIMACIÓN VIVA */}
           <GlitchTextAnimated text="HONGO AWARDS" size="text-7xl md:text-9xl" />
           
           <p className="text-xl md:text-2xl text-slate-300 max-w-2xl mx-auto leading-relaxed">
@@ -473,7 +514,7 @@ const LandingPage = ({ onLogin }: { onLogin: () => void }) => {
             <Button 
               variant="outline" 
               icon={Calendar} 
-              className="text-lg px-8 py-4"
+              className="text-lg px-8 py-4 border-pink-500/30 text-pink-400 hover:bg-pink-900/20"
               onClick={() => document.getElementById('timeline')?.scrollIntoView({ behavior: 'smooth' })}
             >
               VER CALENDARIO
@@ -487,7 +528,7 @@ const LandingPage = ({ onLogin }: { onLogin: () => void }) => {
           <div className="grid md:grid-cols-3 gap-8">
             {[
               { title: "1. NOMINACIONES", desc: "Propone tus clips favoritos. Los mods filtrarán los mejores.", icon: Send, color: "text-cyan-400" },
-              { title: "2. VOTACIONES", desc: "Vota una vez por categoría. Elige sabiamente.", icon: CheckCircle, color: "text-violet-400" },
+              { title: "2. VOTACIONES", desc: "Vota una vez por categoría. Elige sabiamente.", icon: CheckCircle, color: "text-pink-400" },
               { title: "3. LA GALA", desc: "Resultados en vivo con reveal épico. Nadie sabe quién ganó.", icon: Trophy, color: "text-yellow-400" }
             ].map((item, i) => (
               <div key={i} className="bg-slate-900/50 p-8 rounded-2xl border border-slate-800 hover:border-slate-700 transition-colors">
@@ -509,7 +550,7 @@ const Dashboard = ({ user, phase, categories, nominations, userVotes, onNominate
       {/* HEADER DASHBOARD */}
       <div className="container mx-auto mb-8 flex justify-between items-center border-b border-slate-800 pb-4">
         <div className="flex items-center gap-2">
-           <Trophy className="text-violet-500" />
+           <Trophy className="text-pink-500" />
            <span className="font-bold text-white tracking-tight">HONGO AWARDS</span>
         </div>
         <div className="flex items-center gap-4">
@@ -600,13 +641,13 @@ const NominationForm = ({ categories, onSubmit, existing, isMod, onApprove, onDe
           )}
 
           <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <Send className="text-violet-400" /> Nueva Nominación
+            <Send className="text-pink-500" /> Nueva Nominación
           </h3>
           <div className="space-y-4">
             <div>
               <label className="text-sm font-bold text-slate-400">Categoría</label>
               <select 
-                className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white mt-1"
+                className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white mt-1 focus:border-pink-500 outline-none transition-colors"
                 value={form.cat}
                 onChange={e => setForm({...form, cat: e.target.value, title: '', url: ''})}
               >
@@ -621,11 +662,11 @@ const NominationForm = ({ categories, onSubmit, existing, isMod, onApprove, onDe
 
             <div>
               <label className="text-sm font-bold text-slate-400">
-                {selectedCategory.type === 'text' ? 'Nombre del Candidato / Juego' : 'Título del Clip'}
+                {selectedCategory.type === 'text' ? 'Nombre del Candidato' : 'Título del Clip'}
               </label>
               <input 
-                className={`w-full bg-slate-950 border rounded-lg p-3 text-white mt-1 ${isDuplicate ? 'border-red-500 focus:ring-red-500' : 'border-slate-700'}`}
-                placeholder={selectedCategory.type === 'text' ? "Ej. Minecraft" : "Ej. El grito del susto"}
+                className={`w-full bg-slate-950 border rounded-lg p-3 text-white mt-1 outline-none transition-colors ${isDuplicate ? 'border-red-500' : 'border-slate-700 focus:border-pink-500'}`}
+                placeholder={selectedCategory.type === 'text' ? "Ej. Nombre del juego" : "Ej. El grito del susto"}
                 value={form.title}
                 onChange={e => setForm({...form, title: e.target.value})}
               />
@@ -640,7 +681,7 @@ const NominationForm = ({ categories, onSubmit, existing, isMod, onApprove, onDe
               <div>
                 <label className="text-sm font-bold text-slate-400">Link del Clip (Obligatorio)</label>
                 <input 
-                  className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white mt-1"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white mt-1 focus:border-pink-500 outline-none transition-colors"
                   placeholder="https://twitch.tv/..."
                   value={form.url}
                   onChange={e => setForm({...form, url: e.target.value})}
@@ -653,7 +694,7 @@ const NominationForm = ({ categories, onSubmit, existing, isMod, onApprove, onDe
                 <ImageIcon size={14} /> Link Imagen (Opcional)
               </label>
               <input 
-                className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white mt-1"
+                className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white mt-1 focus:border-pink-500 outline-none transition-colors"
                 placeholder="https://i.imgur.com/..."
                 value={form.customImage}
                 onChange={e => setForm({...form, customImage: e.target.value})}
@@ -740,7 +781,7 @@ const NominationForm = ({ categories, onSubmit, existing, isMod, onApprove, onDe
                        <NominationThumbnail nom={nom} categoryType={cat?.type} size="small" />
                     </div>
                     <div>
-                      <div className="font-bold text-slate-200 group-hover:text-violet-300 transition-colors">{nom.title}</div>
+                      <div className="font-bold text-slate-200 group-hover:text-pink-400 transition-colors">{nom.title}</div>
                       <div className="text-xs text-slate-500">{cat?.name}</div>
                     </div>
                  </div>
@@ -778,7 +819,7 @@ const VotingGrid = ({ categories, nominations, userVotes, onVote }: any) => {
         return (
           <div key={cat.id} className="scroll-mt-24">
             <div className="flex items-center gap-4 mb-6 border-b border-slate-800 pb-4">
-              <cat.icon className="text-violet-500 w-8 h-8" />
+              <cat.icon className="text-pink-500 w-8 h-8" />
               <div>
                 <h3 className="text-2xl font-bold text-white uppercase">{cat.name}</h3>
                 <p className="text-slate-400 text-sm">{cat.desc}</p>
@@ -799,7 +840,7 @@ const VotingGrid = ({ categories, nominations, userVotes, onVote }: any) => {
                     className={`relative group rounded-xl overflow-hidden border transition-all ${
                       hasVoted 
                       ? 'opacity-60 grayscale bg-slate-900 border-slate-800' 
-                      : 'bg-slate-800/50 border-slate-700 hover:border-violet-500 hover:shadow-[0_0_30px_rgba(124,58,237,0.15)]'
+                      : 'bg-slate-800/50 border-slate-700 hover:border-pink-500 hover:shadow-[0_0_30px_rgba(236,72,153,0.2)]'
                     }`}
                   >
                     <div className="aspect-video bg-black flex items-center justify-center relative overflow-hidden">
@@ -813,7 +854,7 @@ const VotingGrid = ({ categories, nominations, userVotes, onVote }: any) => {
 
                       {!hasVoted && (
                         <div 
-                          className="absolute inset-0 bg-violet-600/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10" 
+                          className="absolute inset-0 bg-pink-600/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10" 
                           onClick={() => {
                             onVote(cat.id, nom.id);
                             addToast(`Voto registrado para ${nom.title}`, "success");
@@ -1071,7 +1112,7 @@ export default function StreamerAwardsApp() {
       
       <nav className="fixed top-0 left-0 right-0 z-40 px-6 py-4 flex justify-between items-center bg-gradient-to-b from-slate-950/80 to-transparent backdrop-blur-sm pointer-events-none">
         <div className="flex items-center gap-2 pointer-events-auto">
-          <div className="w-8 h-8 bg-violet-600 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-gradient-to-br from-pink-600 to-rose-500 rounded-lg flex items-center justify-center">
             <Trophy size={16} className="text-white" />
           </div>
           <span className="font-bold text-white tracking-tight hidden sm:block">HONGO AWARDS</span>
@@ -1088,7 +1129,7 @@ export default function StreamerAwardsApp() {
                </button>
              </div>
           ) : (
-            <button onClick={handleLogin} className="text-sm font-bold text-white bg-white/10 px-4 py-2 rounded-full hover:bg-white/20 backdrop-blur-md border border-white/10 transition-colors">
+            <button onClick={handleLogin} className="text-sm font-bold text-white bg-gradient-to-r from-pink-600 to-rose-500 px-4 py-2 rounded-full hover:from-pink-500 hover:to-rose-400 transition-colors">
               Iniciar Sesión
             </button>
           )}
@@ -1106,7 +1147,7 @@ export default function StreamerAwardsApp() {
               <button 
                 key={p} 
                 onClick={() => handlePhaseChange(p)}
-                className={`px-3 py-1 rounded text-xs font-bold ${phase === p ? 'bg-violet-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}
+                className={`px-3 py-1 rounded text-xs font-bold ${phase === p ? 'bg-pink-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}
               >
                 Fase {p + 1}
               </button>
