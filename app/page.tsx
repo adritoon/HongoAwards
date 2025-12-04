@@ -360,26 +360,32 @@ const PhaseStepper = ({ currentPhase }: { currentPhase: number }) => {
   ];
 
   return (
-    <div className="w-full max-w-2xl mx-auto mb-12 relative">
+    <div className="w-full max-w-2xl mx-auto mb-20 relative"> {/* mb-20 para dar espacio al texto absoluto */}
       <div className="relative flex justify-between items-start">
         
-        {/* --- BARRA CONECTORA CORREGIDA --- */}
-        {/* Posicionada con left-5 y right-5 para alinearse al centro exacto de los círculos (que son w-10) */}
-        <div className="absolute top-5 left-5 right-5 h-1 bg-slate-800 -z-10 rounded-full transform -translate-y-1/2">
+        {/* --- BARRA DE FONDO (GRIS) --- */}
+        {/* Eliminado -z-10 para que se vea. Centrado matemáticamente con top-5 (20px) */}
+        <div className="absolute top-5 left-5 right-5 h-1 bg-slate-800 rounded-full -translate-y-1/2"></div>
+
+        {/* --- BARRA DE PROGRESO (ROSA) --- */}
+        <div className="absolute top-5 left-5 right-5 h-1 -translate-y-1/2 rounded-full overflow-hidden">
            <motion.div 
-             className="h-full bg-gradient-to-r from-pink-600 to-rose-500 rounded-full"
+             className="h-full bg-gradient-to-r from-pink-600 to-rose-500"
              initial={{ width: "0%" }}
              animate={{ width: `${(currentPhase / (steps.length - 1)) * 100}%` }}
              transition={{ duration: 0.5, delay: 0.2 }}
            />
         </div>
 
-        {/* STEPS */}
+        {/* STEPS (CÍRCULOS) */}
         {steps.map((step, idx) => {
           const isActive = idx === currentPhase;
           const isCompleted = idx < currentPhase;
+          
           return (
-            <div key={step.id} className="flex flex-col items-center gap-2 z-10">
+            <div key={step.id} className="relative z-10 flex flex-col items-center w-10"> {/* w-10 fija el ancho al círculo */}
+              
+              {/* CÍRCULO */}
               <motion.div 
                 className={`w-10 h-10 rounded-full flex items-center justify-center border-4 transition-colors
                   ${isActive ? 'bg-slate-900 border-pink-500 text-pink-400 shadow-[0_0_20px_rgba(236,72,153,0.5)]' : 
@@ -389,10 +395,17 @@ const PhaseStepper = ({ currentPhase }: { currentPhase: number }) => {
               >
                 {isCompleted ? <Check size={16} /> : <span className="font-bold text-sm">{idx + 1}</span>}
               </motion.div>
-              <div className="text-center">
+
+              {/* TEXTO (ABSOLUTO PARA NO DESCUADRAR) */}
+              <div className="absolute top-12 w-32 text-center">
                 <div className={`text-xs font-bold uppercase tracking-wider ${isActive ? 'text-white' : 'text-slate-500'}`}>
                   {step.label}
                 </div>
+                {isActive && (
+                   <div className="text-[10px] text-pink-400 mt-1 font-medium animate-pulse">
+                     {step.date}
+                   </div>
+                )}
               </div>
             </div>
           )
