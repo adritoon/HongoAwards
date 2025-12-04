@@ -29,7 +29,7 @@ import {
   Trophy, Lock, Zap, User, Send, CheckCircle, Crown, 
   Settings, LogOut, Twitch, Calendar, ArrowRight, Play, Star,
   AlertTriangle, ExternalLink, Image as ImageIcon, Trash2, Check, Clock, X, ShieldAlert,
-  Gamepad2, Users, AlertCircle
+  Gamepad2, Users, AlertCircle, Ghost, Heart, MessageSquare, Mic, Skull
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -65,44 +65,96 @@ const APP_ID = 'awards-2024-production';
 
 // --- 2. CONFIGURACIÓN DEL EVENTO ---
 const PHASE_DATES = {
-  // Ajusta estas fechas a tu evento real
   votingStart: new Date('2025-12-20T18:00:00'),
   galaStart: new Date('2025-12-31T20:00:00')
 };
 
-// DEFINICIÓN DE CATEGORÍAS (CON TIPOS Y RESTRICCIONES)
+// DEFINICIÓN DE CATEGORÍAS (LISTA COMPLETA)
 const CATEGORIES = [
+  // --- CLIPS Y MOMENTOS ---
   { 
     id: 'cat_clip', 
     name: 'Clip del Año', 
     icon: Play, 
-    desc: 'El momento más viral.',
-    type: 'clip',       // Pide URL de video
-    restricted: false   // Cualquiera puede nominar
+    desc: 'El momento más viral y compartido.',
+    type: 'clip',       
+    restricted: false   
   },
   { 
     id: 'cat_fail', 
     name: 'Fail del Año', 
     icon: AlertTriangle, 
-    desc: 'Cuando todo salió mal.',
+    desc: 'Cuando todo salió terriblemente mal.',
     type: 'clip',
     restricted: false
   },
   { 
-    id: 'cat_game', 
-    name: 'Juego del Año', 
-    icon: Gamepad2, 
-    desc: 'El vicio supremo.',
-    type: 'text',       // Solo pide Nombre (+ Imagen opcional)
+    id: 'cat_susto', 
+    name: 'Susto del Año', 
+    icon: Ghost, 
+    desc: 'El grito que rompió tímpanos.',
+    type: 'clip',
+    restricted: false
+  },
+  { 
+    id: 'cat_rage', 
+    name: 'Enfado del Año', 
+    icon: Skull, 
+    desc: 'El momento de furia absoluta.',
+    type: 'clip',
+    restricted: false
+  },
+  
+  // --- COMUNIDAD Y CHAT ---
+  { 
+    id: 'cat_mvp', 
+    name: 'MVP del Chat', 
+    icon: Star, 
+    desc: 'El viewer que siempre está ahí apoyando.',
+    type: 'text',
+    restricted: false
+  },
+  { 
+    id: 'cat_artist', 
+    name: 'Artista de la Comunidad', 
+    icon: Heart, 
+    desc: 'Mejores fanarts o edits.',
+    type: 'text',
     restricted: false
   },
   { 
     id: 'cat_mod', 
     name: 'Mod del Año', 
     icon: Users, 
-    desc: 'Los guardianes del chat.',
+    desc: 'La espada y el escudo del chat.',
     type: 'text',
-    restricted: true    // 🔒 SOLO MODS/ADMINS pueden nominar
+    restricted: true    // 🔒 SOLO MODS
+  },
+
+  // --- CONTENIDO GENERAL ---
+  { 
+    id: 'cat_game', 
+    name: 'Juego del Año', 
+    icon: Gamepad2, 
+    desc: 'El vicio supremo donde pasamos más horas.',
+    type: 'text',       
+    restricted: false
+  },
+  { 
+    id: 'cat_phrase', 
+    name: 'Frase del Año', 
+    icon: MessageSquare, 
+    desc: 'Lo que no paramos de repetir.',
+    type: 'text',       
+    restricted: false
+  },
+  { 
+    id: 'cat_event', 
+    name: 'Mejor Evento/Especial', 
+    icon: Mic, 
+    desc: 'El stream especial más currado.',
+    type: 'text',       
+    restricted: true // A veces mejor que lo decidan mods para no repetir
   }
 ];
 
@@ -112,10 +164,7 @@ const isTwitch = (url: string) => url && url.includes('twitch.tv');
 const isKick = (url: string) => url && url.includes('kick.com');
 
 const getDisplayImage = (nomination: any) => {
-  // 1. Imagen manual siempre gana
   if (nomination.customImage) return nomination.customImage;
-  
-  // 2. Si es YouTube, intentar sacar la auto-generada
   if (nomination.url) {
     const ytMatch = nomination.url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
     if (ytMatch && ytMatch[1]) {
@@ -208,15 +257,50 @@ const Button = ({ children, onClick, variant = 'primary', className = '', disabl
   );
 };
 
-const GlitchText = ({ text, size = "text-6xl" }: { text: string, size?: string }) => (
-  <div className={`relative font-black uppercase italic tracking-tighter ${size} text-white group`}>
-    <span className="absolute top-0 left-0 -ml-1 opacity-70 animate-pulse text-red-500 mix-blend-screen">{text}</span>
-    <span className="absolute top-0 left-0 ml-1 opacity-70 animate-pulse text-cyan-500 mix-blend-screen delay-75">{text}</span>
-    <span className="relative z-10">{text}</span>
-  </div>
-);
+// --- GLITCH TEXT ANIMADO V2 (CON JITTER REAL) ---
+const GlitchTextAnimated = ({ text, size = "text-6xl" }: { text: string, size?: string }) => {
+  return (
+    <div className={`relative font-black uppercase italic tracking-tighter ${size} text-white group select-none`}>
+      {/* Capa Roja: Animación de "tembleque" aleatorio */}
+      <motion.span 
+        className="absolute top-0 left-0 -ml-1 opacity-70 text-red-500 mix-blend-screen"
+        animate={{ 
+          x: [0, -2, 2, -1, 0],
+          y: [0, 1, -1, 0]
+        }}
+        transition={{ 
+          duration: 0.2, 
+          repeat: Infinity, 
+          repeatType: "mirror",
+          repeatDelay: 3 // Pausa entre glitches para no marear
+        }}
+      >
+        {text}
+      </motion.span>
+      
+      {/* Capa Cian: Animación inversa */}
+      <motion.span 
+        className="absolute top-0 left-0 ml-1 opacity-70 text-cyan-500 mix-blend-screen"
+        animate={{ 
+          x: [0, 2, -2, 1, 0],
+          y: [0, -1, 1, 0]
+        }}
+        transition={{ 
+          duration: 0.2, 
+          repeat: Infinity, 
+          repeatType: "mirror",
+          repeatDelay: 2
+        }}
+      >
+        {text}
+      </motion.span>
+      
+      {/* Texto Principal */}
+      <span className="relative z-10">{text}</span>
+    </div>
+  );
+};
 
-// Miniatura Inteligente (Soporta Clip y Texto)
 const NominationThumbnail = ({ nom, categoryType, size = 'large' }: { nom: any, categoryType?: string, size?: 'small' | 'large' }) => {
   const [error, setError] = useState(false);
   const displayImage = getDisplayImage(nom);
@@ -225,31 +309,41 @@ const NominationThumbnail = ({ nom, categoryType, size = 'large' }: { nom: any, 
 
   useEffect(() => { setError(false); }, [displayImage]);
 
-  // Si tiene imagen válida, la mostramos
+  // Caso 1: Imagen válida (Custom o YouTube)
   if (displayImage && !error) {
     return (
-       <img
-         src={displayImage}
-         alt={nom.title}
-         className={`w-full h-full object-cover transition-transform duration-500 ${size === 'large' ? 'group-hover:scale-110' : ''}`}
-         onError={() => setError(true)}
-       />
+       <div className="w-full h-full bg-slate-900 flex items-center justify-center overflow-hidden">
+         <img
+           src={displayImage}
+           alt={nom.title}
+           className={`w-full h-full object-cover transition-transform duration-500 ${size === 'large' ? 'group-hover:scale-110' : ''}`}
+           onError={() => setError(true)}
+         />
+       </div>
     );
   }
 
-  // Fallback para Categorías de TEXTO (Sin URL de video)
+  // Caso 2: Categoría de TEXTO sin imagen (Juego, Mod, etc)
   if (categoryType === 'text') {
     return (
-      <div className={`w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900 transition-transform duration-500 ${size === 'large' ? 'group-hover:scale-110' : ''}`}>
-         {/* Usamos la primera letra del título como avatar si no hay imagen */}
-         <div className={`${size === 'large' ? 'text-6xl' : 'text-2xl'} font-black text-slate-700 select-none`}>
-           {nom.title.charAt(0).toUpperCase()}
+      <div className={`w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 transition-transform duration-500 ${size === 'large' ? 'group-hover:scale-110' : ''}`}>
+         <div className="text-center p-4">
+           {/* Inicial Gigante */}
+           <div className={`${size === 'large' ? 'text-7xl' : 'text-3xl'} font-black text-slate-800 drop-shadow-[0_2px_0_rgba(255,255,255,0.1)] select-none`}>
+             {nom.title.charAt(0).toUpperCase()}
+           </div>
+           {/* Icono de fondo sutil */}
+           {size === 'large' && (
+             <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
+                <Gamepad2 size={100} />
+             </div>
+           )}
          </div>
       </div>
     );
   }
 
-  // Fallback para Categorías de CLIP (Logos plataformas)
+  // Caso 3: Categoría de VIDEO sin miniatura (Twitch/Kick fallback)
   return (
     <div className={`w-full h-full flex flex-col items-center justify-center gap-2 transition-transform duration-500
       ${size === 'large' ? 'bg-gradient-to-br group-hover:scale-110' : ''}
@@ -263,6 +357,12 @@ const NominationThumbnail = ({ nom, categoryType, size = 'large' }: { nom: any, 
          <div className={`${size === 'large' ? 'text-4xl' : 'text-[10px]'} font-black italic text-[#53FC18] tracking-tighter`}>KICK</div>
       ) : (
          <Play size={size === 'large' ? 40 : 12} className="text-slate-600" />
+      )}
+      
+      {size === 'large' && (
+        <span className={`text-xs font-mono tracking-widest uppercase ${isKickLink ? "text-[#53FC18]" : "text-slate-500"}`}>
+          {isTwitchLink ? "Twitch Clip" : isKickLink ? "Kick Clip" : "Video Link"}
+        </span>
       )}
     </div>
   );
@@ -358,7 +458,8 @@ const LandingPage = ({ onLogin }: { onLogin: () => void }) => {
              </span>
           </div>
           
-          <GlitchText text="HONGO AWARDS" size="text-7xl md:text-9xl" />
+          {/* AQUÍ ESTÁ EL NUEVO COMPONENTE CON ANIMACIÓN VIVA */}
+          <GlitchTextAnimated text="HONGO AWARDS" size="text-7xl md:text-9xl" />
           
           <p className="text-xl md:text-2xl text-slate-300 max-w-2xl mx-auto leading-relaxed">
             Celebramos lo mejor, lo peor y lo más cringe del año. 
@@ -423,7 +524,6 @@ const Dashboard = ({ user, phase, categories, nominations, userVotes, onNominate
 
       <PhaseStepper currentPhase={phase} />
 
-      {/* CONTADOR DE FASES (RESTAURADO) */}
       {phase === 0 && <CountdownDisplay targetDate={PHASE_DATES.votingStart} label="Tiempo restante para nominar" />}
       {phase === 1 && <CountdownDisplay targetDate={PHASE_DATES.galaStart} label="Cierre de votaciones" />}
 
@@ -435,8 +535,8 @@ const Dashboard = ({ user, phase, categories, nominations, userVotes, onNominate
                 categories={categories} 
                 onSubmit={onNominate} 
                 existing={nominations} 
-                isAdmin={isAdmin} // Pasamos isAdmin para saber si puede ver restricciones
-                isMod={isMod}     // Pasamos isMod para la moderación
+                isAdmin={isAdmin} 
+                isMod={isMod}     
                 onApprove={onApprove}
                 onDelete={onDelete}
               />
@@ -476,9 +576,8 @@ const NominationForm = ({ categories, onSubmit, existing, isMod, onApprove, onDe
   const pendingNoms = existing.filter((n: any) => !n.approved);
 
   const selectedCategory = categories.find((c: any) => c.id === form.cat) || categories[0];
-  const isRestricted = selectedCategory.restricted && !isMod; // Bloqueado si es restringido Y no eres mod
+  const isRestricted = selectedCategory.restricted && !isMod; 
 
-  // Verificar Duplicados
   const isDuplicate = useMemo(() => {
     if (!form.title) return false;
     return existing.some((n: any) => 
@@ -492,7 +591,6 @@ const NominationForm = ({ categories, onSubmit, existing, isMod, onApprove, onDe
       <div className="space-y-6">
         <div className="bg-slate-900/80 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm relative overflow-hidden">
           
-          {/* Overlay de Bloqueo para Categorías Restringidas */}
           {isRestricted && (
             <div className="absolute inset-0 bg-slate-950/80 z-10 flex flex-col items-center justify-center text-center p-6 backdrop-blur-sm">
               <ShieldAlert size={48} className="text-red-500 mb-2" />
@@ -538,7 +636,6 @@ const NominationForm = ({ categories, onSubmit, existing, isMod, onApprove, onDe
               )}
             </div>
 
-            {/* URL VIDEO (Solo si es tipo 'clip') */}
             {selectedCategory.type === 'clip' && (
               <div>
                 <label className="text-sm font-bold text-slate-400">Link del Clip (Obligatorio)</label>
@@ -551,7 +648,6 @@ const NominationForm = ({ categories, onSubmit, existing, isMod, onApprove, onDe
               </div>
             )}
 
-            {/* IMAGEN (Siempre opcional) */}
             <div>
               <label className="text-sm font-bold text-slate-400 flex items-center gap-2">
                 <ImageIcon size={14} /> Link Imagen (Opcional)
@@ -573,7 +669,6 @@ const NominationForm = ({ categories, onSubmit, existing, isMod, onApprove, onDe
               className="w-full"
               disabled={isRestricted || (selectedCategory.type === 'clip' && !form.url) || !form.title}
               onClick={async () => {
-                // Validación extra
                 if(selectedCategory.type === 'clip' && !form.url) {
                   addToast("El link es obligatorio para esta categoría", "error");
                   return;
