@@ -611,11 +611,11 @@ const NominationForm = ({ categories, onSubmit, existing, isMod, onApprove, onDe
             {/* CAMBIO: Icono rosa */}
             <Send className="text-pink-500" /> Nueva Nominación
           </h3>
+          
           <div className="space-y-4">
             <div>
               <label className="text-sm font-bold text-slate-400">Categoría</label>
               <select 
-                // CAMBIO: Borde rosa en focus
                 className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white mt-1 focus:border-pink-500 outline-none transition-colors"
                 value={form.cat}
                 onChange={e => setForm({...form, cat: e.target.value, title: '', url: ''})}
@@ -680,12 +680,20 @@ const NominationForm = ({ categories, onSubmit, existing, isMod, onApprove, onDe
               disabled={isRestricted || (selectedCategory.type === 'clip' && !form.url) || !form.title}
               onClick={async () => {
                 if(selectedCategory.type === 'clip' && !form.url) {
-                  addToast("El link es obligatorio para esta categoría", "error");
+                  addToast("El link es obligatorio", "error");
                   return;
                 }
                 
-                await onSubmit(form);
+                // --- CORRECCIÓN AQUÍ ---
+                // 1. Guardamos los datos en una variable temporal
+                const dataToSubmit = { ...form };
+
+                // 2. Limpiamos el formulario INMEDIATAMENTE (Optimistic UI Update)
+                // Esto evita que el detector de duplicados salte cuando llegue la data nueva
                 setForm({...form, title: '', url: '', customImage: ''});
+                
+                // 3. Enviamos la copia a la base de datos
+                await onSubmit(dataToSubmit);
                 
                 if(!isMod) addToast("Sugerencia enviada a revisión", "success");
                 else addToast("Nominación creada correctamente", "success");
