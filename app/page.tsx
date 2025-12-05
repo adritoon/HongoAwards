@@ -453,7 +453,7 @@ const LandingPage = ({ onLogin }: { onLogin: () => void }) => {
           initial={{ opacity: 0, y: 50 }} 
           animate={{ opacity: 1, y: 0 }} 
           transition={{ duration: 0.8 }}
-          className="relative z-10 space-y-6 max-w-4xl"
+          className="relative z-10 space-y-4 max-w-4xl"
         >
           <div className="flex items-center justify-center gap-2 mb-4">
              <span className="px-3 py-1 border border-pink-500/50 rounded-full text-pink-300 text-xs font-mono bg-pink-500/10 uppercase tracking-widest">

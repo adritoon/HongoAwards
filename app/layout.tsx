@@ -6,8 +6,24 @@ import { Inter } from 'next/font/google'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
+  // --- 1. URL BASE (CRÍTICO PARA REDES SOCIALES) ---
+  // Reemplaza 'https://tu-proyecto.vercel.app' con tu dominio real de Vercel.
+  // Si no lo pones, la imagen OpenGraph no cargará en Discord/Twitter.
+  metadataBase: new URL('https://hongo-awards.vercel.app'), 
+
+  // --- 2. INFORMACIÓN BÁSICA ---
   title: 'Hongo Awards 2025',
   description: 'La gala de premios más fúngica del año. Vota por tus favoritos.',
+
+  // --- 3. OPEN GRAPH (CÓMO SE VE AL COMPARTIR) ---
+  // Esto asegura que Twitter y WhatsApp usen la imagen generada
+  openGraph: {
+    title: 'Hongo Awards 2025',
+    description: 'Entra y vota por los mejores clips, fails y momentos del año.',
+    siteName: 'Hongo Awards',
+    locale: 'es_ES',
+    type: 'website',
+  },
 }
 
 export default function RootLayout({
