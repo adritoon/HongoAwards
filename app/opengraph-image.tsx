@@ -141,7 +141,7 @@ export default async function Image() {
             boxShadow: '0 0 40px rgba(236, 72, 153, 0.6)',
           }}
         >
-          VOTA AHORA ➜
+          ¡VOTA AHORA!
         </div>
       </div>
     ),
