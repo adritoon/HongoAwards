@@ -6,8 +6,8 @@ import { Inter } from 'next/font/google'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Streamer Awards 2024',
-  description: 'La gala de premios más épica del año. Vota por tus favoritos.',
+  title: 'Hongo Awards 2025',
+  description: 'La gala de premios más fúngica del año. Vota por tus favoritos.',
 }
 
 export default function RootLayout({
