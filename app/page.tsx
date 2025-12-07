@@ -956,6 +956,7 @@ const GalaView = ({ categories, nominations, isAdmin }: any) => {
 export default function StreamerAwardsApp() {
   const [user, setUser] = useState<any>(null);
   const [phase, setPhase] = useState(0);
+  const [serverPhase, setServerPhase] = useState(0);
   // ESTADOS DE ROL
   const [isAdmin, setIsAdmin] = useState(false);
   const [isMod, setIsMod] = useState(false);
@@ -1020,8 +1021,18 @@ export default function StreamerAwardsApp() {
   }, []);
 
   useEffect(() => {
+    // Escuchar cambios GLOBALES de fase
     const phaseUnsub = onSnapshot(doc(db, 'artifacts', APP_ID, 'public', 'data', 'config', 'main_settings'), (docSnap) => {
-      if(docSnap.exists()) setPhase(docSnap.data().phase || 0);
+      if(docSnap.exists()) {
+        const livePhase = docSnap.data().phase || 0;
+        setServerPhase(livePhase);
+        
+        // IMPORTANTE: Si NO soy admin, mi vista se actualiza automáticamente con el server.
+        // Si SOY admin, mantengo mi vista local donde yo la haya dejado.
+        if (!isAdmin) {
+          setPhase(livePhase);
+        }
+      }
     });
 
     const nomsQuery = query(collection(db, 'artifacts', APP_ID, 'public', 'data', 'nominations'), orderBy('createdAt', 'desc'));
@@ -1030,7 +1041,7 @@ export default function StreamerAwardsApp() {
     });
 
     return () => { phaseUnsub(); nomsUnsub(); };
-  }, []);
+  }, [isAdmin]);
 
   // LOGIN CON GOOGLE
   const handleLogin = async () => {
@@ -1097,11 +1108,17 @@ export default function StreamerAwardsApp() {
     }
   };
 
-  const handlePhaseChange = async (newPhase: number) => {
-    if(!isAdmin) return;
-    setPhase(newPhase); 
-    await setDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'config', 'main_settings'), { phase: newPhase });
-    addToast(`Fase cambiada a: ${newPhase === 0 ? "Nominaciones" : newPhase === 1 ? "Votaciones" : "Gala"}`, "info");
+  // CAMBIO 3: Nueva lógica de cambio de fase LOCAL
+  const handleLocalPhaseChange = (newPhase: number) => {
+    setPhase(newPhase);
+    addToast(`Vista previa: Fase ${newPhase + 1}`, "info");
+  };
+
+  // CAMBIO 4: Nueva función para PUBLICAR la fase al mundo
+  const handlePublishPhase = async () => {
+    await setDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'config', 'main_settings'), { phase: phase });
+    addToast(`🚀 ¡FASE ${phase + 1} EN VIVO PARA TODOS!`, "success");
+    setServerPhase(phase); // Actualización optimista
   };
 
   if (loading) return <div className="h-screen bg-slate-950 flex items-center justify-center text-white font-mono">Cargando Sistema...</div>;
@@ -1136,23 +1153,59 @@ export default function StreamerAwardsApp() {
         </div>
       </nav>
 
-      {/* ADMIN CONTROLS (Solo visible si isAdmin es true desde la DB) */}
+      {/* CAMBIO 5: BARRA DE ADMIN MEJORADA (CON BOTÓN DE PUBLICAR) */}
       {isAdmin && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 bg-slate-900 border border-red-500/50 p-2 rounded-xl shadow-2xl scale-90 hover:scale-100 transition-transform origin-bottom pointer-events-auto">
-          <div className="p-2 rounded-lg bg-red-500 text-white">
-            <ShieldAlert size={20} />
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-slate-900 border border-red-500/50 p-2 pl-3 rounded-2xl shadow-2xl scale-90 hover:scale-100 transition-transform origin-bottom pointer-events-auto">
+          
+          {/* Indicador de estado */}
+          <div className="flex flex-col items-center justify-center mr-2">
+             <div className="p-1.5 rounded-lg bg-red-500 text-white mb-1">
+               <ShieldAlert size={16} />
+             </div>
+             <span className="text-[10px] font-bold text-white uppercase">
+               {phase === serverPhase ? "Sincronizado" : "Vista Previa"}
+             </span>
           </div>
-          <div className="flex gap-1 border-l border-slate-700 pl-2">
+
+          <div className="h-8 w-px bg-slate-200 mx-1" />
+
+          {/* Botones de Navegación Local */}
+          <div className="flex gap-1">
             {[0, 1, 2].map(p => (
               <button 
                 key={p} 
-                onClick={() => handlePhaseChange(p)}
-                className={`px-3 py-1 rounded text-xs font-bold ${phase === p ? 'bg-pink-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}
+                onClick={() => handleLocalPhaseChange(p)}
+                className={`relative px-4 py-2 rounded-lg text-xs font-bold transition-all 
+                  ${phase === p ? 'bg-white text-rose-500 shadow-md ring-1 ring-rose-100' : 'text-white hover:bg-slate-50 hover:text-slate-600'}`}
               >
                 Fase {p + 1}
+                {/* Puntito verde si esta es la fase que ven los usuarios */}
+                {serverPhase === p && (
+                  <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border-2 border-white"></span>
+                  </span>
+                )}
               </button>
             ))}
           </div>
+
+          {/* BOTÓN DE ACCIÓN: Solo aparece si hay cambios sin publicar */}
+          <AnimatePresence>
+            {phase !== serverPhase && (
+              <motion.button
+                initial={{ width: 0, opacity: 0, padding: 0 }}
+                animate={{ width: "auto", opacity: 1, padding: "0.5rem 1rem" }}
+                exit={{ width: 0, opacity: 0, padding: 0 }}
+                onClick={handlePublishPhase}
+                className="overflow-hidden whitespace-nowrap bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white rounded-xl text-xs font-bold  shadow-rose-200 flex items-center gap-2"
+              >
+                <Zap size={14} className="animate-pulse" />
+                PUBLICAR
+              </motion.button>
+            )}
+          </AnimatePresence>
+
         </div>
       )}
 
