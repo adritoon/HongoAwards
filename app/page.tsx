@@ -594,16 +594,36 @@ const NominationForm = ({ categories, onSubmit, existing, isMod, onApprove, onDe
     );
   }, [form.title, form.cat, existing]);
 
+  // --- NUEVA FUNCIÓN AÑADIDA ---
+  const handleBackToSafe = () => {
+    const safeCat = categories.find((c: any) => !c.restricted) || categories[0];
+    setForm(prev => ({ ...prev, cat: safeCat.id }));
+  };
+  // -----------------------------
+
   return (
     <div className="grid lg:grid-cols-2 gap-12">
       <div className="space-y-6">
         <div className="bg-slate-900/80 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm relative overflow-hidden">
           
+          {/* --- BLOQUE DE RESTRICCIÓN MODIFICADO CON BOTÓN --- */}
           {isRestricted && (
-            <div className="absolute inset-0 bg-slate-950/80 z-10 flex flex-col items-center justify-center text-center p-6 backdrop-blur-sm">
-              <ShieldAlert size={48} className="text-red-500 mb-2" />
-              <h3 className="text-xl font-bold text-white">Categoría Restringida</h3>
-              <p className="text-slate-400 text-sm mt-1">Solo los moderadores pueden nominar en "{selectedCategory.name}".</p>
+            <div className="absolute inset-0 bg-slate-950/90 z-20 flex flex-col items-center justify-center text-center p-6 backdrop-blur-sm">
+              <div className="bg-red-500/10 p-4 rounded-full mb-3 border border-red-500/20">
+                <ShieldAlert size={32} className="text-red-500" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Categoría Restringida</h3>
+              <p className="text-slate-400 text-sm mb-6 max-w-xs">
+                La categoría <span className="text-red-400 font-bold">"{selectedCategory.name}"</span> es exclusiva para nominaciones del staff.
+              </p>
+              
+              {/* BOTÓN NUEVO */}
+              <button 
+                onClick={handleBackToSafe}
+                className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold text-sm transition-all border border-slate-600 flex items-center gap-2 group"
+              >
+                Volver a Categorías Públicas
+              </button>
             </div>
           )}
 
