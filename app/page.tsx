@@ -453,7 +453,7 @@ const LandingPage = ({ onLogin }: { onLogin: () => void }) => {
           initial={{ opacity: 0, y: 50 }} 
           animate={{ opacity: 1, y: 0 }} 
           transition={{ duration: 0.8 }}
-          className="relative z-10 space-y-4 max-w-4xl"
+          className="relative z-10 space-y-1 max-w-4xl"
         >
           <div className="flex items-center justify-center gap-2 mb-4">
              <span className="px-3 py-1 border border-pink-500/50 rounded-full text-pink-300 text-xs font-mono bg-pink-500/10 uppercase tracking-widest">
@@ -1042,6 +1042,79 @@ export default function StreamerAwardsApp() {
 
     return () => { phaseUnsub(); nomsUnsub(); };
   }, [isAdmin]);
+
+// LÓGICA DE AUTO-LOGOUT POR INACTIVIDAD (PERSISTENTE)
+  useEffect(() => {
+    if (!user) return; // Solo activar si hay usuario logueado
+
+    const TIMEOUT_DURATION = 1 * 60 * 1000; // 20 Minutos
+    const STORAGE_KEY = 'hongo_last_active'; // Clave para guardar en el navegador
+    let timeoutId: NodeJS.Timeout;
+
+    // 1. Verificación inicial al abrir la pestaña (Crucial para cuando vuelven al día siguiente)
+    const checkPersistedInactivity = () => {
+      const lastActive = localStorage.getItem(STORAGE_KEY);
+      if (lastActive) {
+        const diff = Date.now() - parseInt(lastActive);
+        // Si ha pasado más tiempo del permitido desde la última vez guardada
+        if (diff > TIMEOUT_DURATION) {
+          signOut(auth);
+          addToast("Tu sesión ha expirado por seguridad", "info");
+          localStorage.removeItem(STORAGE_KEY); 
+          return false; // Detener ejecución porque ya cerramos sesión
+        }
+      }
+      // Si todo bien, actualizamos la marca de tiempo actual
+      localStorage.setItem(STORAGE_KEY, Date.now().toString());
+      return true;
+    };
+
+    // Si la verificación inicial falla (ya expiró), no hacemos nada más
+    if (!checkPersistedInactivity()) return;
+
+    // Función que cierra la sesión en tiempo real (mientras la pestaña está abierta)
+    const handleInactivity = () => {
+      signOut(auth);
+      addToast("Sesión cerrada por inactividad", "info");
+      localStorage.removeItem(STORAGE_KEY);
+    };
+
+    // Función que reinicia el cronómetro Y guarda la actividad en el disco
+    // Usamos 'throttle' para no escribir en disco 100 veces por segundo si mueves el mouse rápido
+    let isThrottled = false;
+    const resetTimer = () => {
+      // Reiniciar contador en memoria
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(handleInactivity, TIMEOUT_DURATION);
+
+      // Guardar en disco (máximo una vez cada 5 segundos para no saturar)
+      if (!isThrottled) {
+        localStorage.setItem(STORAGE_KEY, Date.now().toString());
+        isThrottled = true;
+        setTimeout(() => { isThrottled = false; }, 5000); 
+      }
+    };
+
+    // Eventos que detectan que el usuario está "vivo"
+    window.addEventListener('mousemove', resetTimer);
+    window.addEventListener('keydown', resetTimer);
+    window.addEventListener('click', resetTimer);
+    window.addEventListener('scroll', resetTimer);
+    window.addEventListener('touchstart', resetTimer);
+
+    // Iniciar el primer cronómetro
+    resetTimer();
+
+    // Limpieza
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      window.removeEventListener('mousemove', resetTimer);
+      window.removeEventListener('keydown', resetTimer);
+      window.removeEventListener('click', resetTimer);
+      window.removeEventListener('scroll', resetTimer);
+      window.removeEventListener('touchstart', resetTimer);
+    };
+  }, [user]);
 
   // LOGIN CON GOOGLE
   const handleLogin = async () => {
