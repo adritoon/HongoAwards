@@ -443,7 +443,10 @@ const CountdownDisplay = ({ targetDate, label }: { targetDate: Date, label: stri
 const LandingPage = ({ onLogin }: { onLogin: () => void }) => {
   return (
     <div className="flex flex-col min-h-screen">
-      <section className="relative h-screen flex flex-col items-center justify-center text-center px-4 overflow-hidden">
+      {/* CAMBIO 1: Usamos 'min-h-screen' en vez de 'h-screen' y añadimos padding vertical (py-20)
+          para que en pantallas bajitas el contenido no se corte si no cabe. */}
+      <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-4 overflow-hidden py-20">
+        
         <div className="absolute inset-0 z-0">
            <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-pink-950/20 to-slate-950" />
            <div className="w-full h-full opacity-20 bg-[radial-gradient(#831843_1px,transparent_1px)] [background-size:16px_16px]" />
@@ -453,7 +456,7 @@ const LandingPage = ({ onLogin }: { onLogin: () => void }) => {
           initial={{ opacity: 0, y: 50 }} 
           animate={{ opacity: 1, y: 0 }} 
           transition={{ duration: 0.8 }}
-          className="relative z-10 space-y-1 max-w-4xl"
+          className="relative z-10 space-y-6 max-w-4xl"
         >
           <div className="flex items-center justify-center gap-2 mb-4">
              <span className="px-3 py-1 border border-pink-500/50 rounded-full text-pink-300 text-xs font-mono bg-pink-500/10 uppercase tracking-widest">
@@ -461,7 +464,11 @@ const LandingPage = ({ onLogin }: { onLogin: () => void }) => {
              </span>
           </div>
           
-          <GlitchTextAnimated text="HONGO AWARDS" size="text-7xl md:text-9xl" />
+          {/* CAMBIO 2: Tamaño responsive. 
+              - Móvil: text-5xl (se ve grande pero cabe)
+              - Tablet: text-7xl
+              - PC: text-9xl (imponente) */}
+          <GlitchTextAnimated text="HONGO AWARDS" size="text-7xl sm:text-7xl md:text-9xl" />
           
           <p className="text-xl md:text-2xl text-slate-300 max-w-2xl mx-auto leading-relaxed">
             Celebramos lo mejor, lo peor y lo más cringe del año. 
