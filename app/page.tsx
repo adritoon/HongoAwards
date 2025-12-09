@@ -1078,7 +1078,7 @@ export default function StreamerAwardsApp() {
   useEffect(() => {
     if (!user) return; // Solo activar si hay usuario logueado
 
-    const TIMEOUT_DURATION = 1 * 60 * 1000; // 20 Minutos
+    const TIMEOUT_DURATION = 15 * 60 * 1000; // 20 Minutos
     const STORAGE_KEY = 'hongo_last_active'; // Clave para guardar en el navegador
     let timeoutId: NodeJS.Timeout;
 
