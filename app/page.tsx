@@ -360,15 +360,16 @@ const PhaseStepper = ({ currentPhase }: { currentPhase: number }) => {
   ];
 
   return (
-    <div className="w-full max-w-2xl mx-auto mb-20 relative"> {/* mb-20 para dar espacio al texto absoluto */}
+    // CAMBIO: Añadido px-4 para dar margen en móviles y evitar que el texto toque los bordes
+    <div className="w-full max-w-2xl mx-auto mb-24 relative px-4"> 
       <div className="relative flex justify-between items-start">
         
         {/* --- BARRA DE FONDO (GRIS) --- */}
-        {/* Eliminado -z-10 para que se vea. Centrado matemáticamente con top-5 (20px) */}
-        <div className="absolute top-5 left-5 right-5 h-1 bg-slate-800 rounded-full -translate-y-1/2"></div>
+        {/* Ajustado left/right para tener en cuenta el padding del contenedor */}
+        <div className="absolute top-5 left-9 right-9 h-1 bg-slate-800 rounded-full -translate-y-1/2"></div>
 
         {/* --- BARRA DE PROGRESO (ROSA) --- */}
-        <div className="absolute top-5 left-5 right-5 h-1 -translate-y-1/2 rounded-full overflow-hidden">
+        <div className="absolute top-5 left-9 right-9 h-1 -translate-y-1/2 rounded-full overflow-hidden">
            <motion.div 
              className="h-full bg-gradient-to-r from-pink-600 to-rose-500"
              initial={{ width: "0%" }}
@@ -383,7 +384,7 @@ const PhaseStepper = ({ currentPhase }: { currentPhase: number }) => {
           const isCompleted = idx < currentPhase;
           
           return (
-            <div key={step.id} className="relative z-10 flex flex-col items-center w-10"> {/* w-10 fija el ancho al círculo */}
+            <div key={step.id} className="relative z-10 flex flex-col items-center w-10">
               
               {/* CÍRCULO */}
               <motion.div 
@@ -396,13 +397,15 @@ const PhaseStepper = ({ currentPhase }: { currentPhase: number }) => {
                 {isCompleted ? <Check size={16} /> : <span className="font-bold text-sm">{idx + 1}</span>}
               </motion.div>
 
-              {/* TEXTO (ABSOLUTO PARA NO DESCUADRAR) */}
-              <div className="absolute top-12 w-32 text-center">
-                <div className={`text-xs font-bold uppercase tracking-wider ${isActive ? 'text-white' : 'text-slate-500'}`}>
+              {/* TEXTO FLOTANTE (RESPONSIVE) */}
+              {/* CAMBIO: w-20 en móvil (más estrecho) y w-32 en desktop (md:w-32) */}
+              {/* CAMBIO: text-[10px] en móvil para que quepa mejor */}
+              <div className="absolute top-14 w-24 md:w-40 text-center -left-7 md:-left-14">
+                <div className={`text-[10px] md:text-xs font-bold uppercase tracking-wider ${isActive ? 'text-white' : 'text-slate-500'}`}>
                   {step.label}
                 </div>
                 {isActive && (
-                   <div className="text-[10px] text-pink-400 mt-1 font-medium animate-pulse">
+                   <div className="text-[9px] md:text-[10px] text-pink-400 mt-1 font-medium animate-pulse">
                      {step.date}
                    </div>
                 )}
