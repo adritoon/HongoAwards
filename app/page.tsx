@@ -420,22 +420,43 @@ const PhaseStepper = ({ currentPhase }: { currentPhase: number }) => {
 
 const CountdownDisplay = ({ targetDate, label }: { targetDate: Date, label: string }) => {
   const timeLeft = useCountdown(targetDate);
+  
   return (
-    <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 flex items-center justify-between max-w-md mx-auto mb-8">
+    // CAMBIO 1: Eliminado 'max-w-md' fijo. Ahora es 'w-full max-w-2xl' para tener espacio si lo necesita.
+    // CAMBIO 2: 'flex-col' en móvil, 'md:flex-row' en PC.
+    <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 flex flex-col md:flex-row items-center justify-between w-full max-w-2xl mx-auto mb-8 gap-4 md:gap-0">
+      
+      {/* Título e Icono */}
       <div className="flex items-center gap-3">
         <div className="p-2 bg-pink-500/10 rounded-lg text-pink-400">
           <Clock size={20} />
         </div>
-        <span className="text-sm font-bold text-slate-400 uppercase tracking-wide">{label}</span>
+        <span className="text-xs md:text-sm font-bold text-slate-400 uppercase tracking-wide text-center md:text-left">
+          {label}
+        </span>
       </div>
-      <div className="flex gap-2 font-mono text-white font-bold text-lg">
-        <div>{timeLeft.days}d</div>
-        <div className="text-slate-600">:</div>
-        <div>{timeLeft.hours}h</div>
-        <div className="text-slate-600">:</div>
-        <div>{timeLeft.minutes}m</div>
-        <div className="text-slate-600">:</div>
-        <div className="w-6 text-right">{timeLeft.seconds}s</div>
+
+      {/* Números del Contador */}
+      <div className="flex gap-2 font-mono text-white font-bold text-lg md:text-xl bg-slate-950/50 px-4 py-2 rounded-lg border border-slate-800/50">
+        <div className="flex flex-col items-center">
+          <span>{timeLeft.days}</span>
+          <span className="text-[9px] text-slate-600 uppercase font-sans">días</span>
+        </div>
+        <div className="text-slate-600 py-1">:</div>
+        <div className="flex flex-col items-center">
+          <span>{timeLeft.hours.toString().padStart(2, '0')}</span>
+          <span className="text-[9px] text-slate-600 uppercase font-sans">hrs</span>
+        </div>
+        <div className="text-slate-600 py-1">:</div>
+        <div className="flex flex-col items-center">
+          <span>{timeLeft.minutes.toString().padStart(2, '0')}</span>
+          <span className="text-[9px] text-slate-600 uppercase font-sans">min</span>
+        </div>
+        <div className="text-slate-600 py-1">:</div>
+        <div className="flex flex-col items-center w-8">
+          <span>{timeLeft.seconds.toString().padStart(2, '0')}</span>
+          <span className="text-[9px] text-slate-600 uppercase font-sans">seg</span>
+        </div>
       </div>
     </div>
   );
