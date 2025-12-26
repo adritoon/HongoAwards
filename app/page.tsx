@@ -349,9 +349,7 @@ const NominationThumbnail = ({ nom, categoryType, size = 'large' }: { nom: any, 
 };
 
 // --- NUEVO COMPONENTE: MODAL PARA COMPARTIR ---
-// Reemplaza tu componente ShareModal actual con este:
-
-// --- COMPONENTE MODAL PARA COMPARTIR (VERSIÓN PULIDA FINAL) ---
+// --- COMPONENTE MODAL PARA COMPARTIR (FIX RESPONSIVE + ALINEACIÓN) ---
 const ShareModal = ({ isOpen, onClose, categories, nominations, myChoices }: any) => {
   const [imgUrl, setImgUrl] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -452,16 +450,25 @@ const ShareModal = ({ isOpen, onClose, categories, nominations, myChoices }: any
         animate={{ scale: 1, opacity: 1 }} 
         className="bg-slate-900 border border-slate-700 rounded-2xl max-w-5xl w-full max-h-[95vh] flex flex-col md:flex-row shadow-2xl overflow-hidden"
       >
-        {/* COLUMNA 1: VISTA PREVIA */}
-        <div className="flex-1 bg-slate-950 p-6 md:p-10 overflow-y-auto flex items-center justify-center relative">
+        {/* COLUMNA 1: VISTA PREVIA (CON SCROLL EN MÓVIL) */}
+        <div className="flex-1 bg-slate-950 p-6 md:p-10 overflow-y-auto overflow-x-auto flex items-start justify-center relative">
           
           {/* --- AREA DE CAPTURA --- */}
-          <div className={`${imgUrl ? 'absolute opacity-0 pointer-events-none' : 'relative'} transform scale-75 md:scale-100 origin-top`}>
+          {/* Añadido min-w-fit para asegurar que el contenedor no se aplaste */}
+          <div className={`${imgUrl ? 'absolute opacity-0 pointer-events-none' : 'relative'} min-w-fit origin-top transform md:scale-100 scale-[0.65]`}>
              <div 
                ref={ticketRef} 
                id="ticket-node"
-               className="w-[600px] relative overflow-hidden"
-               style={{ backgroundColor: '#0f172a', fontFamily: 'Arial, sans-serif', padding: '40px' }} 
+               // CAMBIO CLAVE: minWidth: '600px' y width: '600px' fuerzan el tamaño real
+               className="relative overflow-hidden shadow-2xl"
+               style={{ 
+                 width: '600px', 
+                 minWidth: '600px', 
+                 flexShrink: 0,
+                 backgroundColor: '#0f172a', 
+                 fontFamily: 'Arial, sans-serif', 
+                 padding: '40px' 
+               }} 
              >
                 {/* Fondo Decorativo */}
                 <div style={{ position: 'absolute', inset: 0, opacity: 0.1, backgroundImage: 'radial-gradient(#ec4899 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
@@ -477,13 +484,13 @@ const ShareModal = ({ isOpen, onClose, categories, nominations, myChoices }: any
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}>
-                   <h2 style={{ fontSize: '48px', fontWeight: '900', fontStyle: 'italic', textTransform: 'uppercase', marginBottom: '36px', color: '#ffffff', letterSpacing: '-1px', lineHeight: 1, textAlign: 'center' }}>
+                   <h2 style={{ fontSize: '48px', fontWeight: '900', fontStyle: 'italic', textTransform: 'uppercase', marginBottom: '24px', color: '#ffffff', letterSpacing: '-1px', lineHeight: 1, textAlign: 'center', padding: '10px 0' }}>
                      MIS PREDICCIONES
                    </h2>
                    
-                   {/* BADGE (NUBE ROSA) CENTRADO */}
+                   {/* BADGE (NUBE ROSA) */}
                    <div style={{ 
-                     display: 'inline-flex', // Ajusta el ancho al contenido
+                     display: 'inline-flex', 
                      alignItems: 'center', 
                      justifyContent: 'center',
                      padding: '6px 20px', 
@@ -492,23 +499,16 @@ const ShareModal = ({ isOpen, onClose, categories, nominations, myChoices }: any
                      border: '1px solid #831843', 
                      color: '#f472b6', 
                      fontSize: '14px', 
-                     fontWeight: 'bold'
+                     fontWeight: 'bold',
+                     lineHeight: '1'
                    }}>
-                      {/* Icono */}
                       <div style={{ display: 'flex', marginRight: '8px' }}>
                          <Trophy size={16} color="#f472b6" />
                       </div>
-                      
-                      {/* Texto con ajuste óptico manual (top: 2px) */}
-                      <span style={{ 
-                        position: 'relative',
-                        top: '-8px',
-                        fontFamily: 'Arial, sans-serif' // BAJA EL TEXTO 2 PIXELES PARA CENTRARLO VISUALMENTE
-                      }}>
+                      <span style={{ position: 'relative', top: '-2px', fontFamily: 'Arial, sans-serif' }}>
                         HONGO AWARDS 2025
                       </span>
                    </div>
-
                 </div>
 
                 {/* Grid de Votos */}
@@ -538,24 +538,18 @@ const ShareModal = ({ isOpen, onClose, categories, nominations, myChoices }: any
                          
                          {/* TEXTO */}
                          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', flex: 1 }}>
-                            
-                            {/* CATEGORÍA: Reducido margen inferior para juntarlo con el título */}
                             <div style={{ 
                               fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: '#f472b6', 
-                              marginBottom: '2px', // ANTES 6px, AHORA 2px
-                              fontFamily: 'Arial, sans-serif', letterSpacing: '0.5px',
+                              marginBottom: '2px', fontFamily: 'Arial, sans-serif', letterSpacing: '0.5px',
                               lineHeight: '1.2'
                             }}>
                               {cat.name}
                             </div>
-                            
-                            {/* CANDIDATO: Quitamos padding bottom para subirlo */}
                             <div style={{ 
                               fontWeight: 'bold', fontSize: '15px', color: '#ffffff', 
                               lineHeight: '1.3', 
                               fontFamily: 'Arial, sans-serif',
-                              wordWrap: 'break-word',
-                              // paddingBottom removido
+                              wordWrap: 'break-word'
                             }}>
                               {candidate.title}
                             </div>
@@ -578,7 +572,9 @@ const ShareModal = ({ isOpen, onClose, categories, nominations, myChoices }: any
 
           {/* IMAGEN GENERADA (Resultado) */}
           {imgUrl && (
-             <motion.img initial={{ opacity: 0 }} animate={{ opacity: 1 }} src={imgUrl} alt="Mis Votos" className="max-w-full h-auto rounded-lg shadow-2xl border border-slate-700" />
+             <div className="w-full flex justify-center">
+                <motion.img initial={{ opacity: 0 }} animate={{ opacity: 1 }} src={imgUrl} alt="Mis Votos" className="max-w-full h-auto rounded-lg shadow-2xl border border-slate-700" />
+             </div>
           )}
         </div>
 
