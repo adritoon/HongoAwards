@@ -445,10 +445,10 @@ const ShareModal = ({ isOpen, onClose, categories, nominations, myChoices }: any
             fontWeight: 'bold',
             lineHeight: '1'
           }}>
-             <div style={{ display: 'flex', marginRight: '8px' }}>
+             <div style={{ display: 'flex', marginRight: '2px' }}>
                 <Trophy size={16} color="#f472b6" />
              </div>
-             <span style={{ position: 'relative', top: '-8px', fontFamily: 'Arial, sans-serif' }}>
+             <span style={{ position: 'relative', top: '-7.5px', fontFamily: 'Arial, sans-serif' }}>
                HONGO AWARDS 2025
              </span>
           </div>
