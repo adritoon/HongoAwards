@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { 
   getAuth, 
@@ -29,9 +29,10 @@ import {
   Trophy, Lock, Zap, User, Send, CheckCircle, Crown, 
   Settings, LogOut, Twitch, Calendar, ArrowRight, Play, Star,
   AlertTriangle, ExternalLink, Image as ImageIcon, Trash2, Check, Clock, X, ShieldAlert,
-  Gamepad2, Users, AlertCircle, Ghost, Heart, MessageSquare, Mic, Skull, Gem, Sparkles, Paintbrush
+  Gamepad2, Users, AlertCircle, Ghost, Heart, MessageSquare, Mic, Skull, Gem, Sparkles, Paintbrush, Share2, Download
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import html2canvas from 'html2canvas';
 
 // --- ICONO DE GOOGLE ---
 const GoogleIcon = ({ size = 20, className = "" }: { size?: number, className?: string }) => (
@@ -214,7 +215,7 @@ const ToastContext = React.createContext({
 });
 
 const ToastContainer = ({ toasts, removeToast }: any) => (
-  <div className="fixed top-24 right-4 z-50 flex flex-col gap-2 pointer-events-none">
+  <div className="fixed top-24 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
     <AnimatePresence>
       {toasts.map((toast: any) => (
         <motion.div
@@ -266,7 +267,7 @@ const Button = ({ children, onClick, variant = 'primary', className = '', disabl
   );
 };
 
-// --- GLITCH ANIMADO (FONDO OSCURO) ---
+// --- GLITCH ANIMADO ---
 const GlitchTextAnimated = ({ text, size = "text-6xl" }: { text: string, size?: string }) => {
   return (
     <div className={`relative font-black uppercase italic tracking-tighter ${size} text-white group select-none`}>
@@ -289,6 +290,7 @@ const GlitchTextAnimated = ({ text, size = "text-6xl" }: { text: string, size?: 
   );
 };
 
+// --- COMPONENTE THUMBNAIL (Reutilizable) ---
 const NominationThumbnail = ({ nom, categoryType, size = 'large' }: { nom: any, categoryType?: string, size?: 'small' | 'large' }) => {
   const [error, setError] = useState(false);
   const displayImage = getDisplayImage(nom);
@@ -303,6 +305,7 @@ const NominationThumbnail = ({ nom, categoryType, size = 'large' }: { nom: any, 
          <img
            src={displayImage}
            alt={nom.title}
+           crossOrigin="anonymous" // Importante para html2canvas
            className={`w-full h-full object-cover transition-transform duration-500 ${size === 'large' ? 'group-hover:scale-110' : ''}`}
            onError={() => setError(true)}
          />
@@ -314,7 +317,6 @@ const NominationThumbnail = ({ nom, categoryType, size = 'large' }: { nom: any, 
     return (
       <div className={`w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900 transition-transform duration-500 ${size === 'large' ? 'group-hover:scale-110' : ''}`}>
          <div className="relative z-10 text-center p-4">
-            {/* Texto Rosa Neón */}
             <div className={`${size === 'large' ? 'text-7xl' : 'text-3xl'} font-black text-pink-500 select-none`}>
               {nom.title.charAt(0).toUpperCase()}
             </div>
@@ -342,15 +344,293 @@ const NominationThumbnail = ({ nom, categoryType, size = 'large' }: { nom: any, 
       ) : (
          <Play size={size === 'large' ? 40 : 12} className="text-slate-600" />
       )}
-      
-      {size === 'large' && (
-        <span className={`text-xs font-mono tracking-widest uppercase ${isKickLink ? "text-[#53FC18]" : "text-slate-500"}`}>
-          {isTwitchLink ? "Twitch Clip" : isKickLink ? "Kick Clip" : "Video Link"}
-        </span>
-      )}
     </div>
   );
 };
+
+// --- NUEVO COMPONENTE: MODAL PARA COMPARTIR ---
+// Reemplaza tu componente ShareModal actual con este:
+
+// --- COMPONENTE MODAL PARA COMPARTIR (VERSIÓN PULIDA FINAL) ---
+const ShareModal = ({ isOpen, onClose, categories, nominations, myChoices }: any) => {
+  const [imgUrl, setImgUrl] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const ticketRef = useRef<HTMLDivElement>(null);
+
+  const votedCategories = categories.filter((c: any) => myChoices[c.id]);
+
+  // --- SUB-COMPONENTE SEGURO ---
+  const SafeExportThumbnail = ({ nom, catType }: any) => {
+    const displayImage = getDisplayImage(nom);
+    
+    if (displayImage) {
+      return (
+        <div style={{ width: '100%', height: '100%', backgroundColor: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+          <img
+            src={displayImage}
+            alt="tmb"
+            crossOrigin="anonymous"
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        </div>
+      );
+    }
+
+    if (catType === 'text') {
+      return (
+        <div style={{ 
+          width: '100%', height: '100%', 
+          background: 'linear-gradient(135deg, #1e293b, #0f172a)', 
+          display: 'flex', alignItems: 'center', justifyContent: 'center' 
+        }}>
+           <span style={{ fontSize: '24px', fontWeight: '900', color: '#ec4899', fontFamily: 'Arial, sans-serif', lineHeight: '1.2' }}>
+             {nom.title.charAt(0).toUpperCase()}
+           </span>
+        </div>
+      );
+    }
+
+    return (
+      <div style={{ 
+        width: '100%', height: '100%', 
+        backgroundColor: '#1e293b', 
+        display: 'flex', alignItems: 'center', justifyContent: 'center' 
+      }}>
+         <Play size={20} color="#cbd5e1" />
+      </div>
+    );
+  };
+
+  const generateImage = async () => {
+    if (!ticketRef.current) return;
+    setGenerating(true);
+    
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    try {
+      const canvas = await html2canvas(ticketRef.current, {
+        useCORS: true, 
+        backgroundColor: '#020617',
+        scale: 2,
+        logging: false,
+        onclone: (clonedDoc) => {
+           const element = clonedDoc.getElementById('ticket-node');
+           if(element) {
+             element.style.transform = 'translateZ(0)';
+             element.style.fontFeatureSettings = '"liga" 0';
+           }
+        }
+      });
+      setImgUrl(canvas.toDataURL('image/png'));
+    } catch (err) {
+      console.error("Error generando imagen:", err);
+    }
+    setGenerating(false);
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      const timer = setTimeout(() => {
+        if (!imgUrl) generateImage();
+      }, 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
+  const handleShareTwitter = () => {
+    const text = "¡Estas son mis predicciones para los Hongo Awards 2025! 🍄🏆\n\n¿Quiénes son tus favoritos? Vota aquí:";
+    const url = window.location.href;
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md overflow-hidden">
+      <motion.div 
+        initial={{ scale: 0.9, opacity: 0 }} 
+        animate={{ scale: 1, opacity: 1 }} 
+        className="bg-slate-900 border border-slate-700 rounded-2xl max-w-5xl w-full max-h-[95vh] flex flex-col md:flex-row shadow-2xl overflow-hidden"
+      >
+        {/* COLUMNA 1: VISTA PREVIA */}
+        <div className="flex-1 bg-slate-950 p-6 md:p-10 overflow-y-auto flex items-center justify-center relative">
+          
+          {/* --- AREA DE CAPTURA --- */}
+          <div className={`${imgUrl ? 'absolute opacity-0 pointer-events-none' : 'relative'} transform scale-75 md:scale-100 origin-top`}>
+             <div 
+               ref={ticketRef} 
+               id="ticket-node"
+               className="w-[600px] relative overflow-hidden"
+               style={{ backgroundColor: '#0f172a', fontFamily: 'Arial, sans-serif', padding: '40px' }} 
+             >
+                {/* Fondo Decorativo */}
+                <div style={{ position: 'absolute', inset: 0, opacity: 0.1, backgroundImage: 'radial-gradient(#ec4899 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+                <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '12px', background: 'linear-gradient(90deg, #ec4899, #a855f7, #f43f5e)' }} />
+                
+                {/* Header */}
+                <div style={{ 
+                  marginBottom: '40px', 
+                  position: 'relative', 
+                  zIndex: 10,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                   <h2 style={{ fontSize: '48px', fontWeight: '900', fontStyle: 'italic', textTransform: 'uppercase', marginBottom: '36px', color: '#ffffff', letterSpacing: '-1px', lineHeight: 1, textAlign: 'center' }}>
+                     MIS PREDICCIONES
+                   </h2>
+                   
+                   {/* BADGE (NUBE ROSA) CENTRADO */}
+                   <div style={{ 
+                     display: 'inline-flex', // Ajusta el ancho al contenido
+                     alignItems: 'center', 
+                     justifyContent: 'center',
+                     padding: '6px 20px', 
+                     borderRadius: '999px', 
+                     backgroundColor: '#380e22', 
+                     border: '1px solid #831843', 
+                     color: '#f472b6', 
+                     fontSize: '14px', 
+                     fontWeight: 'bold'
+                   }}>
+                      {/* Icono */}
+                      <div style={{ display: 'flex', marginRight: '8px' }}>
+                         <Trophy size={16} color="#f472b6" />
+                      </div>
+                      
+                      {/* Texto con ajuste óptico manual (top: 2px) */}
+                      <span style={{ 
+                        position: 'relative',
+                        top: '-8px',
+                        fontFamily: 'Arial, sans-serif' // BAJA EL TEXTO 2 PIXELES PARA CENTRARLO VISUALMENTE
+                      }}>
+                        HONGO AWARDS 2025
+                      </span>
+                   </div>
+
+                </div>
+
+                {/* Grid de Votos */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', position: 'relative', zIndex: 10 }}>
+                  {votedCategories.map((cat: any) => {
+                    const nomId = myChoices[cat.id];
+                    const candidate = nominations.find((n: any) => n.id === nomId);
+                    if (!candidate) return null;
+                    return (
+                      <div 
+                        key={cat.id} 
+                        style={{ 
+                          padding: '16px 12px', 
+                          borderRadius: '8px', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: '12px',
+                          backgroundColor: 'rgba(30, 41, 59, 0.8)', 
+                          border: '1px solid #334155',
+                          minHeight: '80px'
+                        }}
+                      >
+                         {/* THUMBNAIL */}
+                         <div style={{ width: '52px', height: '52px', borderRadius: '6px', overflow: 'hidden', flexShrink: 0, border: '1px solid #334155' }}>
+                           <SafeExportThumbnail nom={candidate} catType={cat.type} />
+                         </div>
+                         
+                         {/* TEXTO */}
+                         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', flex: 1 }}>
+                            
+                            {/* CATEGORÍA: Reducido margen inferior para juntarlo con el título */}
+                            <div style={{ 
+                              fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: '#f472b6', 
+                              marginBottom: '2px', // ANTES 6px, AHORA 2px
+                              fontFamily: 'Arial, sans-serif', letterSpacing: '0.5px',
+                              lineHeight: '1.2'
+                            }}>
+                              {cat.name}
+                            </div>
+                            
+                            {/* CANDIDATO: Quitamos padding bottom para subirlo */}
+                            <div style={{ 
+                              fontWeight: 'bold', fontSize: '15px', color: '#ffffff', 
+                              lineHeight: '1.3', 
+                              fontFamily: 'Arial, sans-serif',
+                              wordWrap: 'break-word',
+                              // paddingBottom removido
+                            }}>
+                              {candidate.title}
+                            </div>
+                         </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Footer */}
+                <div style={{ marginTop: '40px', paddingTop: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 10, borderTop: '1px solid #1e293b' }}>
+                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', fontWeight: 'bold', backgroundColor: '#db2777' }}>HA</div>
+                      <div style={{ fontSize: '12px', color: '#94a3b8', lineHeight: '1.3' }}>Generado por<br/> <span style={{ color: '#ffffff', fontWeight: 'bold' }}>hongoawards.app</span></div>
+                   </div>
+                   <div style={{ textAlign: 'right', fontSize: '11px', fontFamily: 'monospace', color: '#64748b' }}>{new Date().toLocaleDateString()}</div>
+                </div>
+             </div>
+          </div>
+
+          {/* IMAGEN GENERADA (Resultado) */}
+          {imgUrl && (
+             <motion.img initial={{ opacity: 0 }} animate={{ opacity: 1 }} src={imgUrl} alt="Mis Votos" className="max-w-full h-auto rounded-lg shadow-2xl border border-slate-700" />
+          )}
+        </div>
+
+        {/* CONTROLES */}
+        <div className="w-full md:w-80 bg-slate-900 border-l border-slate-800 p-8 flex flex-col gap-6 relative z-20 shadow-[-20px_0_30px_rgba(0,0,0,0.5)]">
+          <div>
+             <h3 className="text-2xl font-bold text-white mb-2">¡Difunde la palabra!</h3>
+             <p className="text-slate-400 text-sm">Comparte tus elegidos y reta a tus amigos.</p>
+          </div>
+
+          <div className="space-y-3">
+             {generating && (
+               <div className="flex items-center justify-center gap-2 text-pink-400 text-sm font-bold animate-pulse py-4">
+                 <Settings className="animate-spin" size={16} /> Generando tarjeta...
+               </div>
+             )}
+
+             {imgUrl && (
+                <a 
+                  href={imgUrl} 
+                  download={`HongoAwards_Votos_${Date.now()}.png`}
+                  className="flex items-center justify-center gap-2 w-full py-4 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-pink-500/25"
+                >
+                  <Download size={18} /> Descargar Imagen
+                </a>
+             )}
+
+             <button 
+               onClick={handleShareTwitter}
+               className="flex items-center justify-center gap-2 w-full py-4 bg-black hover:bg-slate-800 text-white border border-slate-700 rounded-xl font-bold transition-all"
+             >
+               <Share2 size={18} /> Postear en X
+             </button>
+             
+             <p className="text-[10px] text-center text-slate-500 mt-2">
+                *Debes adjuntar la imagen descargada manualmente en X/Twitter.
+             </p>
+          </div>
+
+          <div className="mt-auto">
+             <button onClick={onClose} className="w-full py-3 text-slate-400 hover:text-white font-bold text-sm">
+               Cerrar
+             </button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+
+// --- RESTO DE COMPONENTES ---
 
 const PhaseStepper = ({ currentPhase }: { currentPhase: number }) => {
   const steps = [
@@ -360,15 +640,9 @@ const PhaseStepper = ({ currentPhase }: { currentPhase: number }) => {
   ];
 
   return (
-    // CAMBIO: Añadido px-4 para dar margen en móviles y evitar que el texto toque los bordes
     <div className="w-full max-w-2xl mx-auto mb-24 relative px-4"> 
       <div className="relative flex justify-between items-start">
-        
-        {/* --- BARRA DE FONDO (GRIS) --- */}
-        {/* Ajustado left/right para tener en cuenta el padding del contenedor */}
         <div className="absolute top-5 left-9 right-9 h-1 bg-slate-800 rounded-full -translate-y-1/2"></div>
-
-        {/* --- BARRA DE PROGRESO (ROSA) --- */}
         <div className="absolute top-5 left-9 right-9 h-1 -translate-y-1/2 rounded-full overflow-hidden">
            <motion.div 
              className="h-full bg-gradient-to-r from-pink-600 to-rose-500"
@@ -378,15 +652,12 @@ const PhaseStepper = ({ currentPhase }: { currentPhase: number }) => {
            />
         </div>
 
-        {/* STEPS (CÍRCULOS) */}
         {steps.map((step, idx) => {
           const isActive = idx === currentPhase;
           const isCompleted = idx < currentPhase;
           
           return (
             <div key={step.id} className="relative z-10 flex flex-col items-center w-10">
-              
-              {/* CÍRCULO */}
               <motion.div 
                 className={`w-10 h-10 rounded-full flex items-center justify-center border-4 transition-colors
                   ${isActive ? 'bg-slate-900 border-pink-500 text-pink-400 shadow-[0_0_20px_rgba(236,72,153,0.5)]' : 
@@ -396,18 +667,14 @@ const PhaseStepper = ({ currentPhase }: { currentPhase: number }) => {
               >
                 {isCompleted ? <Check size={16} /> : <span className="font-bold text-sm">{idx + 1}</span>}
               </motion.div>
-
-              {/* TEXTO FLOTANTE (RESPONSIVE) */}
-              {/* CAMBIO: w-20 en móvil (más estrecho) y w-32 en desktop (md:w-32) */}
-              {/* CAMBIO: text-[10px] en móvil para que quepa mejor */}
               <div className="absolute top-14 w-24 md:w-40 text-center -left-7 md:-left-14">
                 <div className={`text-[10px] md:text-xs font-bold uppercase tracking-wider ${isActive ? 'text-white' : 'text-slate-500'}`}>
                   {step.label}
                 </div>
                 {isActive && (
-                   <div className="text-[9px] md:text-[10px] text-pink-400 mt-1 font-medium animate-pulse">
-                     {step.date}
-                   </div>
+                    <div className="text-[9px] md:text-[10px] text-pink-400 mt-1 font-medium animate-pulse">
+                      {step.date}
+                    </div>
                 )}
               </div>
             </div>
@@ -422,11 +689,7 @@ const CountdownDisplay = ({ targetDate, label }: { targetDate: Date, label: stri
   const timeLeft = useCountdown(targetDate);
   
   return (
-    // CAMBIO 1: Eliminado 'max-w-md' fijo. Ahora es 'w-full max-w-2xl' para tener espacio si lo necesita.
-    // CAMBIO 2: 'flex-col' en móvil, 'md:flex-row' en PC.
     <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 flex flex-col md:flex-row items-center justify-between w-full max-w-2xl mx-auto mb-8 gap-4 md:gap-0">
-      
-      {/* Título e Icono */}
       <div className="flex items-center gap-3">
         <div className="p-2 bg-pink-500/10 rounded-lg text-pink-400">
           <Clock size={20} />
@@ -435,8 +698,6 @@ const CountdownDisplay = ({ targetDate, label }: { targetDate: Date, label: stri
           {label}
         </span>
       </div>
-
-      {/* Números del Contador */}
       <div className="flex gap-2 font-mono text-white font-bold text-lg md:text-xl bg-slate-950/50 px-4 py-2 rounded-lg border border-slate-800/50">
         <div className="flex flex-col items-center">
           <span>{timeLeft.days}</span>
@@ -462,15 +723,10 @@ const CountdownDisplay = ({ targetDate, label }: { targetDate: Date, label: stri
   );
 };
 
-// --- 6. SECCIONES PRINCIPALES ---
-
 const LandingPage = ({ onLogin }: { onLogin: () => void }) => {
   return (
     <div className="flex flex-col min-h-screen">
-      {/* CAMBIO 1: Usamos 'min-h-screen' en vez de 'h-screen' y añadimos padding vertical (py-20)
-          para que en pantallas bajitas el contenido no se corte si no cabe. */}
       <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-4 overflow-hidden py-20">
-        
         <div className="absolute inset-0 z-0">
            <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-pink-950/20 to-slate-950" />
            <div className="w-full h-full opacity-20 bg-[radial-gradient(#831843_1px,transparent_1px)] [background-size:16px_16px]" />
@@ -488,10 +744,6 @@ const LandingPage = ({ onLogin }: { onLogin: () => void }) => {
              </span>
           </div>
           
-          {/* CAMBIO 2: Tamaño responsive. 
-              - Móvil: text-5xl (se ve grande pero cabe)
-              - Tablet: text-7xl
-              - PC: text-9xl (imponente) */}
           <GlitchTextAnimated text="HONGO AWARDS" size="text-7xl sm:text-7xl md:text-9xl" />
           
           <p className="text-xl md:text-2xl text-slate-300 max-w-2xl mx-auto leading-relaxed">
@@ -542,9 +794,21 @@ const LandingPage = ({ onLogin }: { onLogin: () => void }) => {
   );
 };
 
-const Dashboard = ({ user, phase, categories, nominations, userVotes, onNominate, onVote, onApprove, onDelete, isAdmin, isMod }: any) => {
+const Dashboard = ({ user, phase, categories, nominations, userVotes, myChoices, onNominate, onVote, onApprove, onDelete, isAdmin, isMod }: any) => {
+  const [isShareOpen, setIsShareOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-slate-950 pt-20 pb-32 px-4">
+      
+      {/* MODAL COMPARTIR */}
+      <ShareModal 
+        isOpen={isShareOpen} 
+        onClose={() => setIsShareOpen(false)} 
+        categories={categories}
+        nominations={nominations}
+        myChoices={myChoices}
+      />
+
       {/* HEADER DASHBOARD */}
       <div className="container mx-auto mb-8 flex justify-between items-center border-b border-slate-800 pb-4">
         <div className="flex items-center gap-2">
@@ -588,7 +852,9 @@ const Dashboard = ({ user, phase, categories, nominations, userVotes, onNominate
                 categories={categories} 
                 nominations={nominations} 
                 userVotes={userVotes} 
+                myChoices={myChoices} // NUEVO
                 onVote={onVote} 
+                onOpenShare={() => setIsShareOpen(true)} // NUEVO
               />
             </motion.div>
           )}
@@ -625,19 +891,16 @@ const NominationForm = ({ categories, onSubmit, existing, isMod, onApprove, onDe
     );
   }, [form.title, form.cat, existing]);
 
-  // --- NUEVA FUNCIÓN AÑADIDA ---
   const handleBackToSafe = () => {
     const safeCat = categories.find((c: any) => !c.restricted) || categories[0];
     setForm(prev => ({ ...prev, cat: safeCat.id }));
   };
-  // -----------------------------
 
   return (
     <div className="grid lg:grid-cols-2 gap-12">
       <div className="space-y-6">
         <div className="bg-slate-900/80 p-6 rounded-2xl border border-slate-700/50 backdrop-blur-sm relative overflow-hidden">
           
-          {/* --- BLOQUE DE RESTRICCIÓN MODIFICADO CON BOTÓN --- */}
           {isRestricted && (
             <div className="absolute inset-0 bg-slate-950/90 z-20 flex flex-col items-center justify-center text-center p-6 backdrop-blur-sm">
               <div className="bg-red-500/10 p-4 rounded-full mb-3 border border-red-500/20">
@@ -647,8 +910,6 @@ const NominationForm = ({ categories, onSubmit, existing, isMod, onApprove, onDe
               <p className="text-slate-400 text-sm mb-6 max-w-xs">
                 La categoría <span className="text-red-400 font-bold">"{selectedCategory.name}"</span> es exclusiva para nominaciones del staff.
               </p>
-              
-              {/* BOTÓN NUEVO */}
               <button 
                 onClick={handleBackToSafe}
                 className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold text-sm transition-all border border-slate-600 flex items-center gap-2 group"
@@ -659,7 +920,6 @@ const NominationForm = ({ categories, onSubmit, existing, isMod, onApprove, onDe
           )}
 
           <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-            {/* CAMBIO: Icono rosa */}
             <Send className="text-pink-500" /> Nueva Nominación
           </h3>
           
@@ -734,16 +994,8 @@ const NominationForm = ({ categories, onSubmit, existing, isMod, onApprove, onDe
                   addToast("El link es obligatorio", "error");
                   return;
                 }
-                
-                // --- CORRECCIÓN AQUÍ ---
-                // 1. Guardamos los datos en una variable temporal
                 const dataToSubmit = { ...form };
-
-                // 2. Limpiamos el formulario INMEDIATAMENTE (Optimistic UI Update)
-                // Esto evita que el detector de duplicados salte cuando llegue la data nueva
                 setForm({...form, title: '', url: '', customImage: ''});
-                
-                // 3. Enviamos la copia a la base de datos
                 await onSubmit(dataToSubmit);
                 
                 if(!isMod) addToast("Sugerencia enviada a revisión", "success");
@@ -835,11 +1087,41 @@ const NominationForm = ({ categories, onSubmit, existing, isMod, onApprove, onDe
   );
 };
 
-const VotingGrid = ({ categories, nominations, userVotes, onVote }: any) => {
+const VotingGrid = ({ categories, nominations, userVotes, onVote, myChoices, onOpenShare }: any) => {
   const { addToast } = React.useContext(ToastContext);
 
+  // Calcular si ya votó en todas las categorías NO restringidas
+  const publicCategories = categories.filter((c: any) => !c.restricted);
+  const completedVotes = publicCategories.every((c: any) => userVotes.includes(c.id));
+
   return (
-    <div className="space-y-16">
+    <div className="space-y-16 relative">
+      
+      {/* BANNER FLOTANTE DE COMPLETADO */}
+      <AnimatePresence>
+        {completedVotes && (
+          <motion.div 
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            className="fixed bottom-8 left-0 right-0 z-40 flex justify-center px-4 pointer-events-none"
+          >
+            <div className="bg-slate-900/90 backdrop-blur-md border border-pink-500 p-4 rounded-2xl shadow-[0_0_50px_rgba(236,72,153,0.3)] flex items-center gap-6 pointer-events-auto max-w-xl w-full">
+              <div className="hidden sm:flex h-12 w-12 bg-gradient-to-br from-pink-500 to-rose-600 rounded-full items-center justify-center shrink-0">
+                <CheckCircle size={24} className="text-white" />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-white font-bold text-lg leading-none">¡Votación Completa!</h4>
+                <p className="text-pink-200/70 text-sm mt-1">Has votado en todas las categorías públicas.</p>
+              </div>
+              <Button onClick={onOpenShare} variant="primary" className="whitespace-nowrap shadow-none">
+                 Compartir Votos
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {categories.map((cat: any) => {
         const hasVoted = userVotes.includes(cat.id);
         const candidates = nominations.filter((n: any) => n.categoryId === cat.id && n.approved);
@@ -847,7 +1129,6 @@ const VotingGrid = ({ categories, nominations, userVotes, onVote }: any) => {
         return (
           <div key={cat.id} className="scroll-mt-24">
             <div className="flex items-center gap-4 mb-6 border-b border-slate-800 pb-4">
-              {/* CAMBIO: Icono rosa */}
               <cat.icon className="text-pink-500 w-8 h-8" />
               <div>
                 <h3 className="text-2xl font-bold text-white uppercase">{cat.name}</h3>
@@ -862,14 +1143,14 @@ const VotingGrid = ({ categories, nominations, userVotes, onVote }: any) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {candidates.map((nom: any) => {
+                const isSelected = myChoices[cat.id] === nom.id;
                 return (
                   <motion.div 
                     key={nom.id}
                     whileHover={!hasVoted ? { y: -5 } : {}}
                     className={`relative group rounded-xl overflow-hidden border transition-all ${
                       hasVoted 
-                      ? 'opacity-60 grayscale bg-slate-900 border-slate-800' 
-                      // CAMBIO: Hover border y shadow rosa
+                      ? (isSelected ? 'bg-pink-900/20 border-pink-500 opacity-100' : 'opacity-40 grayscale bg-slate-900 border-slate-800')
                       : 'bg-slate-800/50 border-slate-700 hover:border-pink-500 hover:shadow-[0_0_30px_rgba(236,72,153,0.2)]'
                     }`}
                   >
@@ -884,7 +1165,6 @@ const VotingGrid = ({ categories, nominations, userVotes, onVote }: any) => {
 
                       {!hasVoted && (
                         <div 
-                          // CAMBIO: Overlay rosa
                           className="absolute inset-0 bg-pink-600/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10" 
                           onClick={() => {
                             onVote(cat.id, nom.id);
@@ -994,6 +1274,9 @@ export default function StreamerAwardsApp() {
   
   const [nominations, setNominations] = useState<any[]>([]);
   const [userVotes, setUserVotes] = useState<string[]>([]);
+  // NUEVO: Guardar las elecciones del usuario (ID de nominación por categoría)
+  const [myChoices, setMyChoices] = useState<Record<string, string>>({});
+
   const [loading, setLoading] = useState(true);
   const [toasts, setToasts] = useState<any[]>([]);
 
@@ -1024,7 +1307,6 @@ export default function StreamerAwardsApp() {
         if (userSnap.exists()) {
           role = userSnap.data().role || 'user';
         } else {
-          // Si es usuario nuevo, lo creamos como 'user'
           await setDoc(userRef, { 
             email: currentUser.email,
             role: 'user',
@@ -1032,19 +1314,28 @@ export default function StreamerAwardsApp() {
           });
         }
 
-        // Definir permisos según el rol
         setIsAdmin(role === 'admin');
-        setIsMod(role === 'admin' || role === 'moderator'); // Admin también es Mod
+        setIsMod(role === 'admin' || role === 'moderator');
 
         // Cargar Votos
         const votesRef = collection(db, 'artifacts', APP_ID, 'users', currentUser.uid, 'votes');
         const snap = await getDocs(votesRef);
         setUserVotes(snap.docs.map(d => d.data().categoryId));
+        
+        // NUEVO: Cargar elecciones exactas
+        const choices: Record<string, string> = {};
+        snap.docs.forEach(d => {
+           const data = d.data();
+           choices[data.categoryId] = data.nominationId;
+        });
+        setMyChoices(choices);
+
       } else {
         setUser(null);
         setIsAdmin(false);
         setIsMod(false);
         setUserVotes([]);
+        setMyChoices({});
       }
       setLoading(false);
     });
@@ -1052,14 +1343,10 @@ export default function StreamerAwardsApp() {
   }, []);
 
   useEffect(() => {
-    // Escuchar cambios GLOBALES de fase
     const phaseUnsub = onSnapshot(doc(db, 'artifacts', APP_ID, 'public', 'data', 'config', 'main_settings'), (docSnap) => {
       if(docSnap.exists()) {
         const livePhase = docSnap.data().phase || 0;
         setServerPhase(livePhase);
-        
-        // IMPORTANTE: Si NO soy admin, mi vista se actualiza automáticamente con el server.
-        // Si SOY admin, mantengo mi vista local donde yo la haya dejado.
         if (!isAdmin) {
           setPhase(livePhase);
         }
@@ -1074,51 +1361,41 @@ export default function StreamerAwardsApp() {
     return () => { phaseUnsub(); nomsUnsub(); };
   }, [isAdmin]);
 
-// LÓGICA DE AUTO-LOGOUT POR INACTIVIDAD (PERSISTENTE)
   useEffect(() => {
-    if (!user) return; // Solo activar si hay usuario logueado
+    if (!user) return; 
 
-    const TIMEOUT_DURATION = 15 * 60 * 1000; // 20 Minutos
-    const STORAGE_KEY = 'hongo_last_active'; // Clave para guardar en el navegador
+    const TIMEOUT_DURATION = 15 * 60 * 1000; 
+    const STORAGE_KEY = 'hongo_last_active'; 
     let timeoutId: NodeJS.Timeout;
 
-    // 1. Verificación inicial al abrir la pestaña (Crucial para cuando vuelven al día siguiente)
     const checkPersistedInactivity = () => {
       const lastActive = localStorage.getItem(STORAGE_KEY);
       if (lastActive) {
         const diff = Date.now() - parseInt(lastActive);
-        // Si ha pasado más tiempo del permitido desde la última vez guardada
         if (diff > TIMEOUT_DURATION) {
           signOut(auth);
           addToast("Tu sesión ha expirado por seguridad", "info");
           localStorage.removeItem(STORAGE_KEY); 
-          return false; // Detener ejecución porque ya cerramos sesión
+          return false; 
         }
       }
-      // Si todo bien, actualizamos la marca de tiempo actual
       localStorage.setItem(STORAGE_KEY, Date.now().toString());
       return true;
     };
 
-    // Si la verificación inicial falla (ya expiró), no hacemos nada más
     if (!checkPersistedInactivity()) return;
 
-    // Función que cierra la sesión en tiempo real (mientras la pestaña está abierta)
     const handleInactivity = () => {
       signOut(auth);
       addToast("Sesión cerrada por inactividad", "info");
       localStorage.removeItem(STORAGE_KEY);
     };
 
-    // Función que reinicia el cronómetro Y guarda la actividad en el disco
-    // Usamos 'throttle' para no escribir en disco 100 veces por segundo si mueves el mouse rápido
     let isThrottled = false;
     const resetTimer = () => {
-      // Reiniciar contador en memoria
       if (timeoutId) clearTimeout(timeoutId);
       timeoutId = setTimeout(handleInactivity, TIMEOUT_DURATION);
 
-      // Guardar en disco (máximo una vez cada 5 segundos para no saturar)
       if (!isThrottled) {
         localStorage.setItem(STORAGE_KEY, Date.now().toString());
         isThrottled = true;
@@ -1126,17 +1403,14 @@ export default function StreamerAwardsApp() {
       }
     };
 
-    // Eventos que detectan que el usuario está "vivo"
     window.addEventListener('mousemove', resetTimer);
     window.addEventListener('keydown', resetTimer);
     window.addEventListener('click', resetTimer);
     window.addEventListener('scroll', resetTimer);
     window.addEventListener('touchstart', resetTimer);
 
-    // Iniciar el primer cronómetro
     resetTimer();
 
-    // Limpieza
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
       window.removeEventListener('mousemove', resetTimer);
@@ -1147,7 +1421,6 @@ export default function StreamerAwardsApp() {
     };
   }, [user]);
 
-  // LOGIN CON GOOGLE
   const handleLogin = async () => {
     try {
       const provider = new GoogleAuthProvider();
@@ -1164,7 +1437,6 @@ export default function StreamerAwardsApp() {
     addToast("Has cerrado sesión.", "info");
   };
 
-  // ACCIONES CRUD
   const handleNominate = async (form: any) => {
     if(!user) return;
     await addDoc(collection(db, 'artifacts', APP_ID, 'public', 'data', 'nominations'), {
@@ -1180,14 +1452,14 @@ export default function StreamerAwardsApp() {
   };
 
   const handleApproveNomination = async (nomId: string) => {
-    if(!isMod) return; // Solo mods
+    if(!isMod) return; 
     await updateDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'nominations', nomId), {
       approved: true
     });
   };
 
   const handleDeleteNomination = async (nomId: string) => {
-    if(!isMod) return; // Solo mods
+    if(!isMod) return; 
     if(confirm("¿Estás seguro de eliminar esta nominación?")) {
       await deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'nominations', nomId));
     }
@@ -1197,6 +1469,8 @@ export default function StreamerAwardsApp() {
     if(!user || userVotes.includes(catId)) return;
     
     setUserVotes([...userVotes, catId]);
+    // NUEVO: Actualizar elección local
+    setMyChoices(prev => ({...prev, [catId]: nomId}));
 
     try {
       await setDoc(doc(db, 'artifacts', APP_ID, 'users', user.uid, 'votes', catId), {
@@ -1208,21 +1482,24 @@ export default function StreamerAwardsApp() {
     } catch (e) {
       console.error(e);
       setUserVotes(prev => prev.filter(id => id !== catId));
+      setMyChoices(prev => {
+         const copy = {...prev};
+         delete copy[catId];
+         return copy;
+      });
       addToast("Error al registrar voto", "error");
     }
   };
 
-  // CAMBIO 3: Nueva lógica de cambio de fase LOCAL
   const handleLocalPhaseChange = (newPhase: number) => {
     setPhase(newPhase);
     addToast(`Vista previa: Fase ${newPhase + 1}`, "info");
   };
 
-  // CAMBIO 4: Nueva función para PUBLICAR la fase al mundo
   const handlePublishPhase = async () => {
     await setDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'config', 'main_settings'), { phase: phase });
     addToast(`🚀 ¡FASE ${phase + 1} EN VIVO PARA TODOS!`, "success");
-    setServerPhase(phase); // Actualización optimista
+    setServerPhase(phase); 
   };
 
   if (loading) return <div className="h-screen bg-slate-950 flex items-center justify-center text-white font-mono">Cargando Sistema...</div>;
@@ -1257,11 +1534,8 @@ export default function StreamerAwardsApp() {
         </div>
       </nav>
 
-      {/* CAMBIO 5: BARRA DE ADMIN MEJORADA (CON BOTÓN DE PUBLICAR) */}
       {isAdmin && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-slate-900 border border-red-500/50 p-2 pl-3 rounded-2xl shadow-2xl scale-90 hover:scale-100 transition-transform origin-bottom pointer-events-auto">
-          
-          {/* Indicador de estado */}
           <div className="flex flex-col items-center justify-center mr-2">
              <div className="p-1.5 rounded-lg bg-red-500 text-white mb-1">
                <ShieldAlert size={16} />
@@ -1273,7 +1547,6 @@ export default function StreamerAwardsApp() {
 
           <div className="h-8 w-px bg-slate-200 mx-1" />
 
-          {/* Botones de Navegación Local */}
           <div className="flex gap-1">
             {[0, 1, 2].map(p => (
               <button 
@@ -1283,7 +1556,6 @@ export default function StreamerAwardsApp() {
                   ${phase === p ? 'bg-white text-rose-500 shadow-md ring-1 ring-rose-100' : 'text-white hover:bg-slate-50 hover:text-slate-600'}`}
               >
                 Fase {p + 1}
-                {/* Puntito verde si esta es la fase que ven los usuarios */}
                 {serverPhase === p && (
                   <span className="absolute -top-1 -right-1 flex h-3 w-3">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -1294,7 +1566,6 @@ export default function StreamerAwardsApp() {
             ))}
           </div>
 
-          {/* BOTÓN DE ACCIÓN: Solo aparece si hay cambios sin publicar */}
           <AnimatePresence>
             {phase !== serverPhase && (
               <motion.button
@@ -1322,6 +1593,7 @@ export default function StreamerAwardsApp() {
           categories={CATEGORIES}
           nominations={nominations}
           userVotes={userVotes}
+          myChoices={myChoices} // NUEVO
           onNominate={handleNominate}
           onVote={handleVote}
           onApprove={handleApproveNomination}
