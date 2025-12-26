@@ -349,7 +349,7 @@ const NominationThumbnail = ({ nom, categoryType, size = 'large' }: { nom: any, 
 };
 
 // --- NUEVO COMPONENTE: MODAL PARA COMPARTIR ---
-// --- COMPONENTE MODAL PARA COMPARTIR (SIN SALTOS VISUALES) ---
+// --- COMPONENTE MODAL PARA COMPARTIR (FIX FINAL: CAPTURA MÓVIL) ---
 const ShareModal = ({ isOpen, onClose, categories, nominations, myChoices }: any) => {
   const [imgUrl, setImgUrl] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -403,19 +403,28 @@ const ShareModal = ({ isOpen, onClose, categories, nominations, myChoices }: any
     if (!ticketRef.current) return;
     setGenerating(true);
     
-    // Esperamos a que todo esté renderizado
+    // Espera para estabilidad del DOM
     await new Promise(resolve => setTimeout(resolve, 500));
 
     try {
+      // --- AQUÍ ESTÁ LA MAGIA PARA MÓVIL ---
       const canvas = await html2canvas(ticketRef.current, {
         useCORS: true, 
         backgroundColor: '#020617',
-        scale: 2, // Calidad Retina
+        scale: 2, // Calidad Retina (resultado final será 1200px ancho)
         logging: false,
+        // CLAVE 1: Simulamos una pantalla de escritorio grande
+        windowWidth: 1280, 
+        // CLAVE 2: Forzamos el ancho exacto del área a capturar
+        width: 600,
         onclone: (clonedDoc) => {
            const element = clonedDoc.getElementById('ticket-node');
            if(element) {
-             element.style.transform = 'translateZ(0)';
+             // CLAVE 3: Aseguramos que el clon tenga el ancho fijo
+             element.style.width = '600px';
+             element.style.minWidth = '600px';
+             // Reseteamos transformaciones visuales en el clon
+             element.style.transform = 'none'; 
              element.style.fontFeatureSettings = '"liga" 0';
            }
         }
@@ -429,7 +438,6 @@ const ShareModal = ({ isOpen, onClose, categories, nominations, myChoices }: any
 
   useEffect(() => {
     if (isOpen) {
-      // Generamos la imagen tras un breve delay, pero NO cambiamos la vista
       const timer = setTimeout(() => {
         if (!imgUrl) generateImage();
       }, 1000);
@@ -452,10 +460,10 @@ const ShareModal = ({ isOpen, onClose, categories, nominations, myChoices }: any
         animate={{ scale: 1, opacity: 1 }} 
         className="bg-slate-900 border border-slate-700 rounded-2xl max-w-5xl w-full max-h-[95vh] flex flex-col md:flex-row shadow-2xl overflow-hidden"
       >
-        {/* COLUMNA 1: VISTA PREVIA (Siempre mostramos el HTML) */}
+        {/* COLUMNA 1: VISTA PREVIA (HTML SIEMPRE VISIBLE) */}
         <div className="flex-1 bg-slate-950 p-6 md:p-10 overflow-y-auto overflow-x-auto flex items-start justify-center relative">
           
-          {/* Mantenemos el escalado visual para móviles pero SIEMPRE visible */}
+          {/* Contenedor con escala visual para móvil, pero ancho real para captura */}
           <div className="min-w-fit origin-top transform md:scale-100 scale-[0.65]">
              <div 
                ref={ticketRef} 
@@ -463,8 +471,8 @@ const ShareModal = ({ isOpen, onClose, categories, nominations, myChoices }: any
                className="relative overflow-hidden shadow-2xl"
                style={{ 
                  width: '600px', 
-                 minWidth: '600px', 
-                 flexShrink: 0,
+                 // IMPORTANTE: box-sizing border-box para que el padding no sume al ancho
+                 boxSizing: 'border-box',
                  backgroundColor: '#0f172a', 
                  fontFamily: 'Arial, sans-serif', 
                  padding: '40px' 
@@ -505,7 +513,6 @@ const ShareModal = ({ isOpen, onClose, categories, nominations, myChoices }: any
                       <div style={{ display: 'flex', marginRight: '8px' }}>
                          <Trophy size={16} color="#f472b6" />
                       </div>
-                      {/* Texto ajustado verticalmente */}
                       <span style={{ position: 'relative', top: '-2px', fontFamily: 'Arial, sans-serif' }}>
                         HONGO AWARDS 2025
                       </span>
@@ -570,9 +577,6 @@ const ShareModal = ({ isOpen, onClose, categories, nominations, myChoices }: any
                 </div>
              </div>
           </div>
-          
-          {/* ELIMINADO: Ya no mostramos la <img> generada aquí para evitar el salto visual. 
-              El usuario sigue viendo el HTML de arriba. */}
 
         </div>
 
@@ -590,7 +594,6 @@ const ShareModal = ({ isOpen, onClose, categories, nominations, myChoices }: any
                </div>
              )}
 
-             {/* El botón aparece cuando la imagen está lista, pero la vista NO cambia */}
              {imgUrl && (
                 <a 
                   href={imgUrl} 
