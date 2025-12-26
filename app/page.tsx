@@ -349,7 +349,7 @@ const NominationThumbnail = ({ nom, categoryType, size = 'large' }: { nom: any, 
 };
 
 // --- NUEVO COMPONENTE: MODAL PARA COMPARTIR ---
-// --- COMPONENTE MODAL PARA COMPARTIR (FIX RESPONSIVE + ALINEACIÓN) ---
+// --- COMPONENTE MODAL PARA COMPARTIR (SIN SALTOS VISUALES) ---
 const ShareModal = ({ isOpen, onClose, categories, nominations, myChoices }: any) => {
   const [imgUrl, setImgUrl] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -403,13 +403,14 @@ const ShareModal = ({ isOpen, onClose, categories, nominations, myChoices }: any
     if (!ticketRef.current) return;
     setGenerating(true);
     
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // Esperamos a que todo esté renderizado
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     try {
       const canvas = await html2canvas(ticketRef.current, {
         useCORS: true, 
         backgroundColor: '#020617',
-        scale: 2,
+        scale: 2, // Calidad Retina
         logging: false,
         onclone: (clonedDoc) => {
            const element = clonedDoc.getElementById('ticket-node');
@@ -428,9 +429,10 @@ const ShareModal = ({ isOpen, onClose, categories, nominations, myChoices }: any
 
   useEffect(() => {
     if (isOpen) {
+      // Generamos la imagen tras un breve delay, pero NO cambiamos la vista
       const timer = setTimeout(() => {
         if (!imgUrl) generateImage();
-      }, 1200);
+      }, 1000);
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
@@ -450,16 +452,14 @@ const ShareModal = ({ isOpen, onClose, categories, nominations, myChoices }: any
         animate={{ scale: 1, opacity: 1 }} 
         className="bg-slate-900 border border-slate-700 rounded-2xl max-w-5xl w-full max-h-[95vh] flex flex-col md:flex-row shadow-2xl overflow-hidden"
       >
-        {/* COLUMNA 1: VISTA PREVIA (CON SCROLL EN MÓVIL) */}
+        {/* COLUMNA 1: VISTA PREVIA (Siempre mostramos el HTML) */}
         <div className="flex-1 bg-slate-950 p-6 md:p-10 overflow-y-auto overflow-x-auto flex items-start justify-center relative">
           
-          {/* --- AREA DE CAPTURA --- */}
-          {/* Añadido min-w-fit para asegurar que el contenedor no se aplaste */}
-          <div className={`${imgUrl ? 'absolute opacity-0 pointer-events-none' : 'relative'} min-w-fit origin-top transform md:scale-100 scale-[0.65]`}>
+          {/* Mantenemos el escalado visual para móviles pero SIEMPRE visible */}
+          <div className="min-w-fit origin-top transform md:scale-100 scale-[0.65]">
              <div 
                ref={ticketRef} 
                id="ticket-node"
-               // CAMBIO CLAVE: minWidth: '600px' y width: '600px' fuerzan el tamaño real
                className="relative overflow-hidden shadow-2xl"
                style={{ 
                  width: '600px', 
@@ -505,6 +505,7 @@ const ShareModal = ({ isOpen, onClose, categories, nominations, myChoices }: any
                       <div style={{ display: 'flex', marginRight: '8px' }}>
                          <Trophy size={16} color="#f472b6" />
                       </div>
+                      {/* Texto ajustado verticalmente */}
                       <span style={{ position: 'relative', top: '-2px', fontFamily: 'Arial, sans-serif' }}>
                         HONGO AWARDS 2025
                       </span>
@@ -569,16 +570,13 @@ const ShareModal = ({ isOpen, onClose, categories, nominations, myChoices }: any
                 </div>
              </div>
           </div>
+          
+          {/* ELIMINADO: Ya no mostramos la <img> generada aquí para evitar el salto visual. 
+              El usuario sigue viendo el HTML de arriba. */}
 
-          {/* IMAGEN GENERADA (Resultado) */}
-          {imgUrl && (
-             <div className="w-full flex justify-center">
-                <motion.img initial={{ opacity: 0 }} animate={{ opacity: 1 }} src={imgUrl} alt="Mis Votos" className="max-w-full h-auto rounded-lg shadow-2xl border border-slate-700" />
-             </div>
-          )}
         </div>
 
-        {/* CONTROLES */}
+        {/* COLUMNA 2: CONTROLES */}
         <div className="w-full md:w-80 bg-slate-900 border-l border-slate-800 p-8 flex flex-col gap-6 relative z-20 shadow-[-20px_0_30px_rgba(0,0,0,0.5)]">
           <div>
              <h3 className="text-2xl font-bold text-white mb-2">¡Difunde la palabra!</h3>
@@ -592,6 +590,7 @@ const ShareModal = ({ isOpen, onClose, categories, nominations, myChoices }: any
                </div>
              )}
 
+             {/* El botón aparece cuando la imagen está lista, pero la vista NO cambia */}
              {imgUrl && (
                 <a 
                   href={imgUrl} 
