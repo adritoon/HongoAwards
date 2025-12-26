@@ -349,15 +349,17 @@ const NominationThumbnail = ({ nom, categoryType, size = 'large' }: { nom: any, 
 };
 
 // --- NUEVO COMPONENTE: MODAL PARA COMPARTIR ---
-// --- COMPONENTE MODAL PARA COMPARTIR (FIX FINAL: CAPTURA MÓVIL) ---
+// --- COMPONENTE MODAL PARA COMPARTIR (TÉCNICA GHOST TICKET) ---
 const ShareModal = ({ isOpen, onClose, categories, nominations, myChoices }: any) => {
   const [imgUrl, setImgUrl] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
-  const ticketRef = useRef<HTMLDivElement>(null);
+  
+  // Usaremos este ref para el elemento "Fantasma" que está fuera de pantalla
+  const ghostTicketRef = useRef<HTMLDivElement>(null);
 
   const votedCategories = categories.filter((c: any) => myChoices[c.id]);
 
-  // --- SUB-COMPONENTE SEGURO ---
+  // --- SUB-COMPONENTE SEGURO (Reutilizable para Preview y Ghost) ---
   const SafeExportThumbnail = ({ nom, catType }: any) => {
     const displayImage = getDisplayImage(nom);
     
@@ -399,32 +401,137 @@ const ShareModal = ({ isOpen, onClose, categories, nominations, myChoices }: any
     );
   };
 
+  // --- CONTENIDO DEL TICKET (Extraído para usarlo dos veces) ---
+  const TicketContent = () => (
+    <div 
+      style={{ 
+        width: '600px', 
+        minWidth: '600px', // Forzar ancho rígido
+        backgroundColor: '#0f172a', 
+        fontFamily: 'Arial, sans-serif', 
+        padding: '40px',
+        boxSizing: 'border-box'
+      }} 
+    >
+       {/* Fondo Decorativo */}
+       <div style={{ position: 'absolute', inset: 0, opacity: 0.1, backgroundImage: 'radial-gradient(#ec4899 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+       <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '12px', background: 'linear-gradient(90deg, #ec4899, #a855f7, #f43f5e)' }} />
+       
+       {/* Header */}
+       <div style={{ 
+         marginBottom: '40px', 
+         position: 'relative', 
+         zIndex: 10,
+         display: 'flex',
+         flexDirection: 'column',
+         alignItems: 'center',
+         justifyContent: 'center'
+       }}>
+          <h2 style={{ fontSize: '48px', fontWeight: '900', fontStyle: 'italic', textTransform: 'uppercase', marginBottom: '24px', color: '#ffffff', letterSpacing: '-1px', lineHeight: 1, textAlign: 'center', padding: '10px 0' }}>
+            MIS PREDICCIONES
+          </h2>
+          
+          {/* BADGE (NUBE ROSA) */}
+          <div style={{ 
+            display: 'inline-flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            padding: '6px 20px', 
+            borderRadius: '999px', 
+            backgroundColor: '#380e22', 
+            border: '1px solid #831843', 
+            color: '#f472b6', 
+            fontSize: '14px', 
+            fontWeight: 'bold',
+            lineHeight: '1'
+          }}>
+             <div style={{ display: 'flex', marginRight: '8px' }}>
+                <Trophy size={16} color="#f472b6" />
+             </div>
+             <span style={{ position: 'relative', top: '-2px', fontFamily: 'Arial, sans-serif' }}>
+               HONGO AWARDS 2025
+             </span>
+          </div>
+       </div>
+
+       {/* Grid de Votos */}
+       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', position: 'relative', zIndex: 10 }}>
+         {votedCategories.map((cat: any) => {
+           const nomId = myChoices[cat.id];
+           const candidate = nominations.find((n: any) => n.id === nomId);
+           if (!candidate) return null;
+           return (
+             <div 
+               key={cat.id} 
+               style={{ 
+                 padding: '16px 12px', 
+                 borderRadius: '8px', 
+                 display: 'flex', 
+                 alignItems: 'center', 
+                 gap: '12px',
+                 backgroundColor: 'rgba(30, 41, 59, 0.8)', 
+                 border: '1px solid #334155',
+                 minHeight: '80px'
+               }}
+             >
+                <div style={{ width: '52px', height: '52px', borderRadius: '6px', overflow: 'hidden', flexShrink: 0, border: '1px solid #334155' }}>
+                  <SafeExportThumbnail nom={candidate} catType={cat.type} />
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', flex: 1 }}>
+                   <div style={{ 
+                     fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: '#f472b6', 
+                     marginBottom: '2px', fontFamily: 'Arial, sans-serif', letterSpacing: '0.5px',
+                     lineHeight: '1.2'
+                   }}>
+                     {cat.name}
+                   </div>
+                   <div style={{ 
+                     fontWeight: 'bold', fontSize: '15px', color: '#ffffff', 
+                     lineHeight: '1.3', 
+                     fontFamily: 'Arial, sans-serif',
+                     wordWrap: 'break-word'
+                   }}>
+                     {candidate.title}
+                   </div>
+                </div>
+             </div>
+           );
+         })}
+       </div>
+
+       {/* Footer */}
+       <div style={{ marginTop: '40px', paddingTop: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 10, borderTop: '1px solid #1e293b' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+             <div style={{ width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', fontWeight: 'bold', backgroundColor: '#db2777' }}>HA</div>
+             <div style={{ fontSize: '12px', color: '#94a3b8', lineHeight: '1.3' }}>Generado por<br/> <span style={{ color: '#ffffff', fontWeight: 'bold' }}>hongoawards.app</span></div>
+          </div>
+          <div style={{ textAlign: 'right', fontSize: '11px', fontFamily: 'monospace', color: '#64748b' }}>{new Date().toLocaleDateString()}</div>
+       </div>
+    </div>
+  );
+
   const generateImage = async () => {
-    if (!ticketRef.current) return;
+    // Usamos el ghostTicketRef que está fuera de pantalla
+    if (!ghostTicketRef.current) return;
     setGenerating(true);
     
-    // Espera para estabilidad del DOM
+    // Esperamos un momento para asegurar renderizado
     await new Promise(resolve => setTimeout(resolve, 500));
 
     try {
-      // --- AQUÍ ESTÁ LA MAGIA PARA MÓVIL ---
-      const canvas = await html2canvas(ticketRef.current, {
+      const canvas = await html2canvas(ghostTicketRef.current, {
         useCORS: true, 
         backgroundColor: '#020617',
-        scale: 2, // Calidad Retina (resultado final será 1200px ancho)
+        scale: 2, // Calidad Retina
         logging: false,
-        // CLAVE 1: Simulamos una pantalla de escritorio grande
-        windowWidth: 1280, 
-        // CLAVE 2: Forzamos el ancho exacto del área a capturar
+        // Forzamos dimensiones de escritorio
+        windowWidth: 1280,
         width: 600,
         onclone: (clonedDoc) => {
-           const element = clonedDoc.getElementById('ticket-node');
+           const element = clonedDoc.getElementById('ghost-ticket');
            if(element) {
-             // CLAVE 3: Aseguramos que el clon tenga el ancho fijo
-             element.style.width = '600px';
-             element.style.minWidth = '600px';
-             // Reseteamos transformaciones visuales en el clon
-             element.style.transform = 'none'; 
+             element.style.transform = 'none'; // Asegurar que no haya escalas extrañas
              element.style.fontFeatureSettings = '"liga" 0';
            }
         }
@@ -454,176 +561,92 @@ const ShareModal = ({ isOpen, onClose, categories, nominations, myChoices }: any
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md overflow-hidden">
-      <motion.div 
-        initial={{ scale: 0.9, opacity: 0 }} 
-        animate={{ scale: 1, opacity: 1 }} 
-        className="bg-slate-900 border border-slate-700 rounded-2xl max-w-5xl w-full max-h-[95vh] flex flex-col md:flex-row shadow-2xl overflow-hidden"
+    <>
+      {/* 1. EL TICKET FANTASMA (INVISIBLE) - SE USA SOLO PARA CAPTURA */}
+      {/* Position fixed + left -9999px lo saca de la pantalla del móvil pero lo mantiene renderizado a full size */}
+      <div 
+        style={{ position: 'fixed', top: 0, left: '-9999px', zIndex: -10 }}
       >
-        {/* COLUMNA 1: VISTA PREVIA (HTML SIEMPRE VISIBLE) */}
-        <div className="flex-1 bg-slate-950 p-6 md:p-10 overflow-y-auto overflow-x-auto flex items-start justify-center relative">
-          
-          {/* Contenedor con escala visual para móvil, pero ancho real para captura */}
-          <div className="min-w-fit origin-top transform md:scale-100 scale-[0.65]">
-             <div 
-               ref={ticketRef} 
-               id="ticket-node"
-               className="relative overflow-hidden shadow-2xl"
-               style={{ 
-                 width: '600px', 
-                 // IMPORTANTE: box-sizing border-box para que el padding no sume al ancho
-                 boxSizing: 'border-box',
-                 backgroundColor: '#0f172a', 
-                 fontFamily: 'Arial, sans-serif', 
-                 padding: '40px' 
-               }} 
-             >
-                {/* Fondo Decorativo */}
-                <div style={{ position: 'absolute', inset: 0, opacity: 0.1, backgroundImage: 'radial-gradient(#ec4899 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
-                <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '12px', background: 'linear-gradient(90deg, #ec4899, #a855f7, #f43f5e)' }} />
-                
-                {/* Header */}
-                <div style={{ 
-                  marginBottom: '40px', 
-                  position: 'relative', 
-                  zIndex: 10,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                   <h2 style={{ fontSize: '48px', fontWeight: '900', fontStyle: 'italic', textTransform: 'uppercase', marginBottom: '24px', color: '#ffffff', letterSpacing: '-1px', lineHeight: 1, textAlign: 'center', padding: '10px 0' }}>
-                     MIS PREDICCIONES
-                   </h2>
-                   
-                   {/* BADGE (NUBE ROSA) */}
-                   <div style={{ 
-                     display: 'inline-flex', 
-                     alignItems: 'center', 
-                     justifyContent: 'center',
-                     padding: '6px 20px', 
-                     borderRadius: '999px', 
-                     backgroundColor: '#380e22', 
-                     border: '1px solid #831843', 
-                     color: '#f472b6', 
-                     fontSize: '14px', 
-                     fontWeight: 'bold',
-                     lineHeight: '1'
-                   }}>
-                      <div style={{ display: 'flex', marginRight: '8px' }}>
-                         <Trophy size={16} color="#f472b6" />
-                      </div>
-                      <span style={{ position: 'relative', top: '-2px', fontFamily: 'Arial, sans-serif' }}>
-                        HONGO AWARDS 2025
-                      </span>
-                   </div>
-                </div>
-
-                {/* Grid de Votos */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', position: 'relative', zIndex: 10 }}>
-                  {votedCategories.map((cat: any) => {
-                    const nomId = myChoices[cat.id];
-                    const candidate = nominations.find((n: any) => n.id === nomId);
-                    if (!candidate) return null;
-                    return (
-                      <div 
-                        key={cat.id} 
-                        style={{ 
-                          padding: '16px 12px', 
-                          borderRadius: '8px', 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          gap: '12px',
-                          backgroundColor: 'rgba(30, 41, 59, 0.8)', 
-                          border: '1px solid #334155',
-                          minHeight: '80px'
-                        }}
-                      >
-                         {/* THUMBNAIL */}
-                         <div style={{ width: '52px', height: '52px', borderRadius: '6px', overflow: 'hidden', flexShrink: 0, border: '1px solid #334155' }}>
-                           <SafeExportThumbnail nom={candidate} catType={cat.type} />
-                         </div>
-                         
-                         {/* TEXTO */}
-                         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', flex: 1 }}>
-                            <div style={{ 
-                              fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: '#f472b6', 
-                              marginBottom: '2px', fontFamily: 'Arial, sans-serif', letterSpacing: '0.5px',
-                              lineHeight: '1.2'
-                            }}>
-                              {cat.name}
-                            </div>
-                            <div style={{ 
-                              fontWeight: 'bold', fontSize: '15px', color: '#ffffff', 
-                              lineHeight: '1.3', 
-                              fontFamily: 'Arial, sans-serif',
-                              wordWrap: 'break-word'
-                            }}>
-                              {candidate.title}
-                            </div>
-                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Footer */}
-                <div style={{ marginTop: '40px', paddingTop: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 10, borderTop: '1px solid #1e293b' }}>
-                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <div style={{ width: '36px', height: '36px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', fontWeight: 'bold', backgroundColor: '#db2777' }}>HA</div>
-                      <div style={{ fontSize: '12px', color: '#94a3b8', lineHeight: '1.3' }}>Generado por<br/> <span style={{ color: '#ffffff', fontWeight: 'bold' }}>hongoawards.app</span></div>
-                   </div>
-                   <div style={{ textAlign: 'right', fontSize: '11px', fontFamily: 'monospace', color: '#64748b' }}>{new Date().toLocaleDateString()}</div>
-                </div>
-             </div>
-          </div>
-
+        <div ref={ghostTicketRef} id="ghost-ticket">
+           <TicketContent />
         </div>
+      </div>
 
-        {/* COLUMNA 2: CONTROLES */}
-        <div className="w-full md:w-80 bg-slate-900 border-l border-slate-800 p-8 flex flex-col gap-6 relative z-20 shadow-[-20px_0_30px_rgba(0,0,0,0.5)]">
-          <div>
-             <h3 className="text-2xl font-bold text-white mb-2">¡Difunde la palabra!</h3>
-             <p className="text-slate-400 text-sm">Comparte tus elegidos y reta a tus amigos.</p>
-          </div>
-
-          <div className="space-y-3">
-             {generating && (
-               <div className="flex items-center justify-center gap-2 text-pink-400 text-sm font-bold animate-pulse py-4">
-                 <Settings className="animate-spin" size={16} /> Generando tarjeta...
+      {/* 2. EL MODAL VISIBLE PARA EL USUARIO */}
+      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md overflow-hidden">
+        <motion.div 
+          initial={{ scale: 0.9, opacity: 0 }} 
+          animate={{ scale: 1, opacity: 1 }} 
+          className="bg-slate-900 border border-slate-700 rounded-2xl max-w-5xl w-full max-h-[95vh] flex flex-col md:flex-row shadow-2xl overflow-hidden"
+        >
+          {/* COLUMNA 1: VISTA PREVIA (Responsive visual) */}
+          <div className="flex-1 bg-slate-950 p-6 md:p-10 overflow-y-auto flex items-start justify-center relative">
+            
+            {/* Si ya tenemos imagen, la mostramos. Si no, mostramos un preview escalado */}
+            {imgUrl ? (
+               <div className="w-full flex justify-center">
+                  <motion.img 
+                    initial={{ opacity: 0 }} 
+                    animate={{ opacity: 1 }} 
+                    src={imgUrl} 
+                    alt="Mis Votos" 
+                    className="max-w-full h-auto rounded-lg shadow-2xl border border-slate-700" 
+                  />
                </div>
-             )}
+            ) : (
+               // Preview escalado para que el usuario vea algo mientras se genera
+               <div className="origin-top transform scale-[0.5] sm:scale-[0.6] md:scale-[0.8]">
+                  <TicketContent />
+               </div>
+            )}
 
-             {imgUrl && (
-                <a 
-                  href={imgUrl} 
-                  download={`HongoAwards_Votos_${Date.now()}.png`}
-                  className="flex items-center justify-center gap-2 w-full py-4 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-pink-500/25"
-                >
-                  <Download size={18} /> Descargar Imagen
-                </a>
-             )}
-
-             <button 
-               onClick={handleShareTwitter}
-               className="flex items-center justify-center gap-2 w-full py-4 bg-black hover:bg-slate-800 text-white border border-slate-700 rounded-xl font-bold transition-all"
-             >
-               <Share2 size={18} /> Postear en X
-             </button>
-             
-             <p className="text-[10px] text-center text-slate-500 mt-2">
-                *Debes adjuntar la imagen descargada manualmente en X/Twitter.
-             </p>
           </div>
 
-          <div className="mt-auto">
-             <button onClick={onClose} className="w-full py-3 text-slate-400 hover:text-white font-bold text-sm">
-               Cerrar
-             </button>
+          {/* COLUMNA 2: CONTROLES */}
+          <div className="w-full md:w-80 bg-slate-900 border-l border-slate-800 p-8 flex flex-col gap-6 relative z-20 shadow-[-20px_0_30px_rgba(0,0,0,0.5)]">
+            <div>
+               <h3 className="text-2xl font-bold text-white mb-2">¡Difunde la palabra!</h3>
+               <p className="text-slate-400 text-sm">Comparte tus elegidos y reta a tus amigos.</p>
+            </div>
+
+            <div className="space-y-3">
+               {generating && (
+                 <div className="flex items-center justify-center gap-2 text-pink-400 text-sm font-bold animate-pulse py-4">
+                   <Settings className="animate-spin" size={16} /> Generando tarjeta...
+                 </div>
+               )}
+
+               {imgUrl && (
+                  <a 
+                    href={imgUrl} 
+                    download={`HongoAwards_Votos_${Date.now()}.png`}
+                    className="flex items-center justify-center gap-2 w-full py-4 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-pink-500/25"
+                  >
+                    <Download size={18} /> Descargar Imagen
+                  </a>
+               )}
+
+               <button 
+                 onClick={handleShareTwitter}
+                 className="flex items-center justify-center gap-2 w-full py-4 bg-black hover:bg-slate-800 text-white border border-slate-700 rounded-xl font-bold transition-all"
+               >
+                 <Share2 size={18} /> Postear en X
+               </button>
+               
+               <p className="text-[10px] text-center text-slate-500 mt-2">
+                  *Debes adjuntar la imagen descargada manualmente en X/Twitter.
+               </p>
+            </div>
+
+            <div className="mt-auto">
+               <button onClick={onClose} className="w-full py-3 text-slate-400 hover:text-white font-bold text-sm">
+                 Cerrar
+               </button>
+            </div>
           </div>
-        </div>
-      </motion.div>
-    </div>
+        </motion.div>
+      </div>
+    </>
   );
 };
 
