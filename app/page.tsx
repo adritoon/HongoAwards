@@ -66,8 +66,8 @@ const APP_ID = 'awards-2024-production';
 
 // --- 2. CONFIGURACIÓN DEL EVENTO ---
 const PHASE_DATES = {
-  votingStart: new Date('2025-12-20T18:00:00'),
-  galaStart: new Date('2025-12-31T20:00:00')
+  votingStart: new Date('2026-01-06T17:00:00'),
+  galaStart: new Date('2026-01-06T19:00:00')
 };
 
 // DEFINICIÓN DE CATEGORÍAS
@@ -122,6 +122,14 @@ const CATEGORIES = [
     desc: 'El suscriptor legendario.',
     type: 'text',
     restricted: true    // 🔒 SOLO MODS ELIGEN
+  },
+  { 
+    id: 'cat_clipero', 
+    name: 'Mejor Clipero', 
+    icon: Star, 
+    desc: 'El mejor clipero',
+    type: 'text',
+    restricted: false    // 🔒 SOLO MODS ELIGEN
   },
   { 
     id: 'cat_artist', 
