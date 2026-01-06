@@ -66,7 +66,7 @@ const APP_ID = 'awards-2024-production';
 
 // --- 2. CONFIGURACIÓN DEL EVENTO ---
 const PHASE_DATES = {
-  votingStart: new Date('2026-01-06T17:00:00-05:00'),
+  votingStart: new Date('2026-01-06T17:30:00-05:00'),
   galaStart: new Date('2026-01-06T19:00:00-05:00')
 };
 
