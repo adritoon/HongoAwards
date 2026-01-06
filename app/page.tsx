@@ -167,9 +167,9 @@ const CATEGORIES = [
   },
   { 
     id: 'cat_event', 
-    name: 'Mejor Evento', 
+    name: 'Mejor Evento/Serie', 
     icon: Mic, 
-    desc: 'El stream especial más currado.',
+    desc: 'El mejor stream o serie.',
     type: 'text',       
     restricted: true 
   }
