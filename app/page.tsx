@@ -132,14 +132,6 @@ const CATEGORIES = [
     restricted: false    // 🔒 SOLO MODS ELIGEN
   },
   { 
-    id: 'cat_artist', 
-    name: 'Artista de la Comu', 
-    icon: Paintbrush, 
-    desc: 'Mejores fanarts o edits.',
-    type: 'text',
-    restricted: false 
-  },
-  { 
     id: 'cat_mod', 
     name: 'Mod del Año', 
     icon: Users, 
