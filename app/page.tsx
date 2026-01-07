@@ -1433,61 +1433,37 @@ const WinnerReveal = ({ winner, cat, isAdmin, onReveal, isRevealed }: any) => {
   );
 };
 
-// --- GALA VIEW PRINCIPAL (CON DELAY INTELIGENTE Y CONTROLES DE ADMIN) ---
+// --- GALA VIEW PRINCIPAL (FIX DISTRIBUCIÓN HONGUITOS) ---
 const GalaView = ({ categories, nominations, isAdmin }: any) => {
   const [revealed, setRevealed] = useState<string[]>([]);
   const [showEndgame, setShowEndgame] = useState(false);
-  
-  // Usamos una referencia para saber si es la primera carga de datos
-  // Esto evita que el delay salte si recargas la página y ya estaba todo revelado.
   const isInitialLoad = useRef(true);
 
-  // 1. SINCRONIZACIÓN CON FIREBASE + LÓGICA DE CARGA INICIAL
   useEffect(() => {
     const galaStateRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'config', 'gala_state');
-    
     const unsubscribe = onSnapshot(galaStateRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
         const serverRevealed = data.revealed || [];
-        
         setRevealed(serverRevealed);
-
-        // LÓGICA INTELIGENTE:
-        // Si al cargar la página (isInitialLoad) YA están todos revelados...
         if (isInitialLoad.current) {
            if (categories.length > 0 && serverRevealed.length === categories.length) {
-             // ... mostramos el final DE INMEDIATO (sin esperar 8s)
              setShowEndgame(true);
            }
-           isInitialLoad.current = false; // Marcamos que ya cargó por primera vez
+           isInitialLoad.current = false;
         }
-      } else {
-        isInitialLoad.current = false;
-      }
+      } else { isInitialLoad.current = false; }
     });
-
     return () => unsubscribe();
-  }, [categories.length]); // Dependencia para asegurar que categories existe
+  }, [categories.length]);
 
-  // Verificar si TODO ha sido revelado
   const allRevealed = categories.length > 0 && revealed.length === categories.length;
 
-  // 2. EFECTO DELAY (SOLO PARA EL MOMENTO EN VIVO)
   useEffect(() => {
-    // Solo aplicamos el delay si:
-    // a) Está todo revelado
-    // b) Y NO es la carga inicial (es decir, acaba de suceder el evento de revelar)
     if (allRevealed && !isInitialLoad.current && !showEndgame) {
-      const timer = setTimeout(() => {
-        setShowEndgame(true);
-      }, 8000); // 8 segundos de drama
+      const timer = setTimeout(() => { setShowEndgame(true); }, 8000);
       return () => clearTimeout(timer);
-    } 
-    // Si dejamos de estar en "allRevealed" (ej. reseteamos), ocultamos el final
-    else if (!allRevealed) {
-      setShowEndgame(false);
-    }
+    } else if (!allRevealed) { setShowEndgame(false); }
   }, [allRevealed, showEndgame]);
 
   const getWinner = (catId: string) => {
@@ -1498,17 +1474,13 @@ const GalaView = ({ categories, nominations, isAdmin }: any) => {
 
   const handleReveal = async (catId: string) => {
     const galaStateRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'config', 'gala_state');
-    try {
-      await setDoc(galaStateRef, { revealed: arrayUnion(catId) }, { merge: true });
-    } catch (error) { console.error(error); }
+    try { await setDoc(galaStateRef, { revealed: arrayUnion(catId) }, { merge: true }); } catch (error) { console.error(error); }
   };
 
-  // --- CONTROLES DE ADMIN (TESTING) ---
   const handleResetGala = async () => {
     if(!confirm("¿Resetear toda la gala? Se ocultarán todos los ganadores.")) return;
     const galaStateRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'config', 'gala_state');
     await setDoc(galaStateRef, { revealed: [] }, { merge: true });
-    // Al resetear, el useEffect ocultará el endgame automáticamente
   };
 
   const handleRevealAll = async () => {
@@ -1518,7 +1490,7 @@ const GalaView = ({ categories, nominations, isAdmin }: any) => {
     await setDoc(galaStateRef, { revealed: allIds }, { merge: true });
   };
 
-  // --- OVERLAY FINAL ---
+  // --- OVERLAY FINAL CORREGIDO ---
   const EndgameOverlay = () => (
     <motion.div 
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 2 }}
@@ -1526,17 +1498,26 @@ const GalaView = ({ categories, nominations, isAdmin }: any) => {
     >
       <div className="absolute inset-0 opacity-30">
          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-pink-900/50 via-slate-950 to-black animate-pulse-slow"></div>
-         {[...Array(20)].map((_, i) => (
-            <motion.div 
-               key={i}
-               initial={{ y: '100vh', x: Math.random() * 100 - 50 + 'vw', opacity: 0, rotate: 0 }}
-               animate={{ y: '-10vh', opacity: [0, 1, 0], rotate: 360 }}
-               transition={{ duration: Math.random() * 5 + 5, repeat: Infinity, ease: "linear", delay: Math.random() * 5 }}
-               className="absolute text-pink-500/30"
-            >
-               <Mushroom size={Math.random() * 30 + 20} />
-            </motion.div>
-         ))}
+         {/* FIX AQUÍ: Usamos 'left' con porcentaje para distribuir en todo el ancho */}
+         {[...Array(30)].map((_, i) => { // Aumenté un poco la cantidad a 30
+            const randomLeft = Math.random() * 100; // 0% a 100%
+            const randomDuration = Math.random() * 5 + 5;
+            const randomDelay = Math.random() * 5;
+            const randomSize = Math.random() * 30 + 15;
+
+            return (
+              <motion.div 
+                 key={i}
+                 style={{ left: `${randomLeft}%` }} // Posición horizontal aleatoria CSS
+                 initial={{ y: '110vh', opacity: 0, rotate: 0 }} // Empieza abajo
+                 animate={{ y: '-20vh', opacity: [0, 1, 0], rotate: 360 }} // Termina arriba
+                 transition={{ duration: randomDuration, repeat: Infinity, ease: "linear", delay: randomDelay }}
+                 className="absolute text-pink-500/30 -translate-x-1/2"
+              >
+                 <Mushroom size={randomSize} />
+              </motion.div>
+            );
+         })}
       </div>
 
       <motion.div 
@@ -1559,7 +1540,6 @@ const GalaView = ({ categories, nominations, isAdmin }: any) => {
          </div>
       </motion.div>
       
-      {/* Botón discreto para cerrar el overlay si eres admin y quieres ver la gala por detrás */}
       {isAdmin && (
         <button onClick={() => setShowEndgame(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white z-50">
            <Eye size={24} />
@@ -1574,52 +1554,32 @@ const GalaView = ({ categories, nominations, isAdmin }: any) => {
          {showEndgame && <EndgameOverlay />}
       </AnimatePresence>
 
-      {/* PANEL DE CONTROL DE ADMIN (ABAJO A LA DERECHA) */}
       {isAdmin && (
         <div className="fixed bottom-6 right-6 z-[90] flex flex-col gap-2 group">
            <div className="bg-slate-900 border border-slate-700 p-2 rounded-xl shadow-2xl flex flex-col gap-2 opacity-50 hover:opacity-100 transition-opacity">
               <div className="text-[10px] text-center text-slate-500 font-bold uppercase mb-1">Testing</div>
-              <button 
-                onClick={handleRevealAll}
-                className="p-3 bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white rounded-lg transition-colors flex items-center justify-center"
-                title="Revelar Todos"
-              >
-                <Eye size={20} />
-              </button>
-              <button 
-                onClick={handleResetGala}
-                className="p-3 bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white rounded-lg transition-colors flex items-center justify-center"
-                title="Resetear Gala"
-              >
-                <Trash2 size={20} />
-              </button>
+              <button onClick={handleRevealAll} className="p-3 bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white rounded-lg transition-colors flex items-center justify-center" title="Revelar Todos"><Eye size={20} /></button>
+              <button onClick={handleResetGala} className="p-3 bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white rounded-lg transition-colors flex items-center justify-center" title="Resetear Gala"><Trash2 size={20} /></button>
            </div>
         </div>
       )}
 
       <div className="max-w-4xl mx-auto space-y-20 pb-32 relative z-0">
         <div className="text-center space-y-4 mb-8">
-          <h1 className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-yellow-500 animate-pulse">
-            LA GRAN GALA
-          </h1>
+          <h1 className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-yellow-500 animate-pulse">LA GRAN GALA</h1>
           <p className="text-slate-400 text-xl">El momento de la verdad ha llegado.</p>
         </div>
 
         {categories.map((cat: any) => {
           const winner = getWinner(cat.id);
           const isRevealed = revealed.includes(cat.id);
-
           return (
             <div key={cat.id} className="relative scroll-mt-24">
               <div className="text-center mb-6">
                 <div className="inline-block px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-2">Categoría</div>
                 <h3 className="text-3xl md:text-4xl font-black text-white uppercase italic text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-400">{cat.name}</h3>
               </div>
-              
-              <WinnerReveal 
-                winner={winner} cat={cat} isAdmin={isAdmin} isRevealed={isRevealed}
-                onReveal={() => handleReveal(cat.id)} 
-              />
+              <WinnerReveal winner={winner} cat={cat} isAdmin={isAdmin} isRevealed={isRevealed} onReveal={() => handleReveal(cat.id)} />
             </div>
           );
         })}
