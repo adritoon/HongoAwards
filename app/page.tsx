@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import html2canvas from 'html2canvas';
+import confetti from 'canvas-confetti';
 
 // --- ICONO DE GOOGLE ---
 const GoogleIcon = ({ size = 20, className = "" }: { size?: number, className?: string }) => (
@@ -1216,6 +1217,171 @@ const VotingGrid = ({ categories, nominations, userVotes, onVote, myChoices, onO
   );
 };
 
+// --- COMPONENTE TARJETA DE GANADOR (CON EFECTOS) ---
+// --- COMPONENTE TARJETA DE GANADOR (COMPACTO Y CON VIDEO) ---
+const WinnerReveal = ({ winner, cat, isAdmin, onReveal, isRevealed }: any) => {
+  useEffect(() => {
+    if (isRevealed) {
+      const audio = new Audio('/winner.mp3');
+      audio.volume = 1.0; 
+      audio.play().catch(e => console.log("Audio play failed", e));
+
+      const duration = 3000;
+      const end = Date.now() + duration;
+
+      const frame = () => {
+        confetti({
+          particleCount: 2, angle: 60, spread: 55, origin: { x: 0 },
+          colors: ['#ec4899', '#fbbf24', '#ffffff']
+        });
+        confetti({
+          particleCount: 2, angle: 120, spread: 55, origin: { x: 1 },
+          colors: ['#ec4899', '#fbbf24', '#ffffff']
+        });
+        if (Date.now() < end) requestAnimationFrame(frame);
+      };
+      frame();
+    }
+  }, [isRevealed]);
+
+  return (
+    <div className="relative flex items-center justify-center w-full">
+      <AnimatePresence mode="wait">
+        {!isRevealed ? (
+           <motion.div 
+             key="locked" 
+             initial={{ opacity: 0 }} 
+             animate={{ opacity: 1 }} 
+             exit={{ opacity: 0, scale: 2, filter: "blur(20px)", transition: { duration: 0.5 } }} 
+             className="bg-slate-900/50 border border-slate-700 rounded-3xl p-8 flex flex-col items-center justify-center gap-6 w-full max-w-lg z-10 relative"
+           >
+             <div className="relative">
+                <div className="absolute inset-0 bg-pink-500/20 blur-xl rounded-full animate-pulse"></div>
+                <Lock className="w-20 h-20 text-slate-500 relative z-10" />
+             </div>
+             
+             {isAdmin ? (
+               <Button 
+                 onClick={onReveal} 
+                 className="w-full py-4 text-lg bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 border-yellow-400/30 shadow-[0_0_30px_rgba(234,179,8,0.3)]"
+               >
+                 <Zap className="mr-2 fill-white" /> REVELAR GANADOR
+               </Button>
+             ) : (
+               <div className="flex flex-col items-center gap-2">
+                 <p className="text-slate-400 font-mono text-xs tracking-widest animate-pulse">ESPERANDO AL STREAMER...</p>
+                 <div className="flex gap-1">
+                    <span className="w-1.5 h-1.5 bg-slate-600 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></span>
+                    <span className="w-1.5 h-1.5 bg-slate-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
+                    <span className="w-1.5 h-1.5 bg-slate-600 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></span>
+                 </div>
+               </div>
+             )}
+           </motion.div>
+        ) : (
+           <motion.div 
+             key="winner" 
+             initial={{ opacity: 0, scale: 0.5, y: 50 }} 
+             animate={{ opacity: 1, scale: 1, y: 0 }} 
+             transition={{ type: "spring", bounce: 0.5, duration: 0.8 }}
+             className="relative w-full max-w-xl" // Ancho máximo controlado
+           >
+             {/* GOD RAYS */}
+             <div className="absolute inset-0 -z-10 flex items-center justify-center">
+                <motion.div 
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                  className="w-[600px] h-[600px] bg-[conic-gradient(from_0deg,transparent_0deg,rgba(236,72,153,0.3)_90deg,transparent_180deg,rgba(234,179,8,0.3)_270deg,transparent_360deg)] opacity-50 blur-3xl rounded-full"
+                />
+             </div>
+
+             <motion.div 
+               initial={{ opacity: 1 }}
+               animate={{ opacity: 0 }}
+               transition={{ duration: 0.5, delay: 0.1 }}
+               className="absolute inset-0 bg-white z-50 pointer-events-none rounded-3xl mix-blend-overlay"
+             />
+
+             {/* TARJETA DE GANADOR COMPACTA */}
+             <div className="bg-gradient-to-b from-yellow-500/20 via-slate-900/90 to-slate-950 border-2 border-yellow-500/50 p-1 rounded-3xl shadow-[0_0_50px_rgba(234,179,8,0.2)] overflow-hidden">
+               <div className="bg-slate-950/50 rounded-[22px] p-6 backdrop-blur-sm relative overflow-hidden">
+                  
+                  <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#fbbf24_1px,transparent_1px)] [background-size:16px_16px]"></div>
+
+                  <div className="relative z-10 flex flex-col items-center text-center">
+                    {/* Corona más pequeña y pegada */}
+                    <motion.div 
+                      initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.5 }}
+                      className="mb-2"
+                    >
+                      <Crown className="w-16 h-16 text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.6)]" />
+                    </motion.div>
+
+                    <div className="text-yellow-200 uppercase tracking-widest text-xs mb-2 font-bold">
+                      Ganador Indiscutible
+                    </div>
+
+                    {/* Título más compacto */}
+                    <motion.h2 
+                      initial={{ scale: 2, opacity: 0, filter: "blur(10px)" }}
+                      animate={{ scale: 1, opacity: 1, filter: "blur(0px)" }}
+                      transition={{ type: "spring", bounce: 0.4 }}
+                      className="text-3xl md:text-4xl font-black text-white mb-6 leading-tight drop-shadow-xl"
+                    >
+                      {winner?.title || "Nadie"}
+                    </motion.h2>
+
+                    {/* IMAGEN / VIDEO INTERACTIVO */}
+                    <motion.div 
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 0.6 }}
+                      className="w-full aspect-video rounded-xl overflow-hidden border border-yellow-500/30 shadow-2xl mb-6 bg-slate-900 relative group"
+                    >
+                         {/* Si hay URL, lo envolvemos en un link */}
+                         {winner?.url ? (
+                           <a 
+                             href={winner.url} 
+                             target="_blank" 
+                             rel="noopener noreferrer" 
+                             className="block w-full h-full relative cursor-pointer"
+                           >
+                             <NominationThumbnail nom={winner} categoryType={cat.type} size="large" />
+                             
+                             {/* Overlay de Play al pasar el mouse o siempre visible */}
+                             <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
+                                <div className="bg-red-600/90 text-white rounded-full p-4 shadow-lg group-hover:scale-110 transition-transform flex items-center gap-2">
+                                  <Play fill="currentColor" size={24} />
+                                  <span className="font-bold text-sm hidden group-hover:inline-block">VER CLIP</span>
+                                </div>
+                             </div>
+                           </a>
+                         ) : (
+                           // Si no es video, solo la imagen estática
+                           <NominationThumbnail nom={winner} categoryType={cat.type} size="large" />
+                         )}
+                    </motion.div>
+
+                    {winner && (
+                      <motion.div 
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }}
+                        className="inline-flex items-center gap-2 px-4 py-1 bg-yellow-500/10 rounded-full border border-yellow-500/20"
+                      >
+                        <Users size={14} className="text-yellow-400" />
+                        <span className="text-yellow-200 font-mono font-bold text-sm">{winner.votes_count} votos</span>
+                      </motion.div>
+                    )}
+                  </div>
+               </div>
+             </div>
+           </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+// --- GALA VIEW PRINCIPAL (ESPACIADO REDUCIDO) ---
 const GalaView = ({ categories, nominations, isAdmin }: any) => {
   const [revealed, setRevealed] = useState<string[]>([]);
   const { addToast } = React.useContext(ToastContext);
@@ -1226,56 +1392,41 @@ const GalaView = ({ categories, nominations, isAdmin }: any) => {
     return cands.reduce((max: any, n: any) => max.votes_count > n.votes_count ? max : n);
   };
 
+  const handleReveal = (catId: string, catName: string) => {
+    setRevealed(prev => [...prev, catId]);
+  };
+
   return (
-    <div className="max-w-3xl mx-auto space-y-24">
+    <div className="max-w-4xl mx-auto space-y-20 pb-32"> {/* Reducido de space-y-32 a 20 */}
+      <div className="text-center space-y-4 mb-8"> {/* Margen inferior reducido */}
+        <h1 className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-yellow-500 animate-pulse">
+          LA GRAN GALA
+        </h1>
+        <p className="text-slate-400 text-xl">El momento de la verdad ha llegado.</p>
+      </div>
+
       {categories.map((cat: any) => {
-        const isRevealed = revealed.includes(cat.id);
         const winner = getWinner(cat.id);
+        const isRevealed = revealed.includes(cat.id);
 
         return (
-          <div key={cat.id} className="text-center relative">
-            <div className="mb-8">
-               <h3 className="text-4xl font-black text-white uppercase italic mb-2 text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-400">{cat.name}</h3>
+          <div key={cat.id} className="relative scroll-mt-24">
+            <div className="text-center mb-6"> {/* Margen reducido */}
+               <div className="inline-block px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-2">
+                 Categoría
+               </div>
+               <h3 className="text-3xl md:text-4xl font-black text-white uppercase italic text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-400">
+                 {cat.name}
+               </h3>
             </div>
-            <div className="relative min-h-[300px]">
-              <AnimatePresence mode="wait">
-                {!isRevealed ? (
-                   <motion.div key="locked" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, scale: 2, filter: "blur(20px)" }} className="bg-slate-900/50 border border-slate-700 rounded-3xl p-12 flex flex-col items-center justify-center gap-6">
-                     <Lock className="w-16 h-16 text-slate-600" />
-                     {isAdmin ? (
-                       <Button 
-                         onClick={() => {
-                           setRevealed([...revealed, cat.id]);
-                           addToast(`Ganador de ${cat.name} revelado`, "info");
-                         }} 
-                         variant="primary"
-                       >
-                         REVELAR GANADOR (ADMIN)
-                       </Button>
-                     ) : (
-                       <p className="text-slate-400 font-mono animate-pulse">ESPERANDO SEÑAL...</p>
-                     )}
-                   </motion.div>
-                ) : (
-                   <motion.div key="winner" initial={{ opacity: 0, scale: 0.5, y: 50 }} animate={{ opacity: 1, scale: 1, y: 0 }} className="relative">
-                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-yellow-500/30 rounded-full blur-[100px]" />
-                     <div className="bg-gradient-to-b from-yellow-500/10 to-slate-950 border border-yellow-500/50 p-6 md:p-10 rounded-3xl relative z-10 shadow-[0_0_50px_rgba(234,179,8,0.2)] overflow-hidden">
-                       <div className="relative z-10">
-                        <Crown className="w-20 h-20 text-yellow-400 mx-auto mb-6 drop-shadow-lg" />
-                        <div className="text-yellow-200 uppercase tracking-widest text-sm mb-2 font-bold">Ganador Indiscutible</div>
-                        <div className="text-4xl md:text-5xl font-black text-white mb-4 leading-tight">{winner?.title || "Nadie"}</div>
-                        <div className="w-full max-w-md mx-auto aspect-video rounded-xl overflow-hidden border border-yellow-500/30 shadow-2xl mb-6 bg-slate-900 flex items-center justify-center">
-                             <NominationThumbnail nom={winner} categoryType={cat.type} size="large" />
-                        </div>
-                        {winner && (
-                          <div className="inline-block px-4 py-1 bg-black/40 rounded text-slate-400 font-mono text-sm border border-white/10">{winner.votes_count} votos totales</div>
-                        )}
-                       </div>
-                     </div>
-                   </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            
+            <WinnerReveal 
+              winner={winner} 
+              cat={cat} 
+              isAdmin={isAdmin} 
+              isRevealed={isRevealed}
+              onReveal={() => handleReveal(cat.id, cat.name)} 
+            />
           </div>
         );
       })}
