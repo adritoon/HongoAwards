@@ -49,6 +49,30 @@ const GoogleIcon = ({ size = 20, className = "" }: { size?: number, className?: 
   </svg>
 );
 
+// --- ICONO CUSTOM: HONGUITO 2.0 (MEJORADO) ---
+const Mushroom = ({ size = 24, className = "" }: { size?: number | string, className?: string }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="currentColor" 
+    className={className}
+  >
+    {/* Tallo */}
+    <path d="M9 14h6c0 3.5-1.5 6-3 6s-3-2.5-3-6z" className="text-white/80" fill="currentColor" />
+    {/* Sombrero */}
+    <path 
+      d="M12 2C6.5 2 2 6.5 2 12h20C22 6.5 17.5 2 12 2z" 
+      fill="currentColor" 
+    />
+    {/* Manchitas (Círculos decorativos en el sombrero) */}
+    <circle cx="7" cy="8" r="1.5" className="text-white/30" fill="currentColor" />
+    <circle cx="17" cy="8" r="1.5" className="text-white/30" fill="currentColor" />
+    <circle cx="12" cy="5" r="2" className="text-white/30" fill="currentColor" />
+  </svg>
+);
+
 // --- 1. CONFIGURACIÓN FIREBASE ---
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -1222,10 +1246,12 @@ const VotingGrid = ({ categories, nominations, userVotes, onVote, myChoices, onO
 const WinnerReveal = ({ winner, cat, isAdmin, onReveal, isRevealed }: any) => {
   useEffect(() => {
     if (isRevealed) {
+      // 1. SONIDO
       const audio = new Audio('/winner.mp3');
       audio.volume = 1.0; 
       audio.play().catch(e => console.log("Audio play failed", e));
 
+      // 2. CONFETI
       const duration = 3000;
       const end = Date.now() + duration;
 
@@ -1243,6 +1269,29 @@ const WinnerReveal = ({ winner, cat, isAdmin, onReveal, isRevealed }: any) => {
       frame();
     }
   }, [isRevealed]);
+
+  // --- HONGUITOS ANIMADOS ---
+  const MushroomSidekick = ({ side }: { side: 'left' | 'right' }) => (
+    <motion.div
+      initial={{ opacity: 0, x: side === 'left' ? -50 : 50, rotate: side === 'left' ? -45 : 45 }}
+      animate={{ 
+        opacity: 1, 
+        x: 0, 
+        rotate: 0,
+        y: [0, -10, 0] // Flotación
+      }}
+      transition={{ 
+        type: "spring", bounce: 0.5, delay: 0.2,
+        y: { duration: 2, repeat: Infinity, ease: "easeInOut" }
+      }}
+      className={`absolute top-1/2 -translate-y-1/2 ${side === 'left' ? '-left-12 md:-left-24' : '-right-12 md:-right-24'} z-0 hidden md:block`}
+    >
+      <div className="relative">
+         <div className="absolute inset-0 bg-pink-500/30 blur-xl rounded-full animate-pulse"></div>
+         <Mushroom size={64} className="text-pink-500 drop-shadow-[0_0_10px_rgba(236,72,153,0.8)]" />
+      </div>
+    </motion.div>
+  );
 
   return (
     <div className="relative flex items-center justify-center w-full">
@@ -1284,8 +1333,12 @@ const WinnerReveal = ({ winner, cat, isAdmin, onReveal, isRevealed }: any) => {
              initial={{ opacity: 0, scale: 0.5, y: 50 }} 
              animate={{ opacity: 1, scale: 1, y: 0 }} 
              transition={{ type: "spring", bounce: 0.5, duration: 0.8 }}
-             className="relative w-full max-w-xl" // Ancho máximo controlado
+             className="relative w-full max-w-xl z-10"
            >
+             {/* HONGUITOS LATERALES */}
+             <MushroomSidekick side="left" />
+             <MushroomSidekick side="right" />
+
              {/* GOD RAYS */}
              <div className="absolute inset-0 -z-10 flex items-center justify-center">
                 <motion.div 
@@ -1302,16 +1355,17 @@ const WinnerReveal = ({ winner, cat, isAdmin, onReveal, isRevealed }: any) => {
                className="absolute inset-0 bg-white z-50 pointer-events-none rounded-3xl mix-blend-overlay"
              />
 
-             {/* TARJETA DE GANADOR COMPACTA */}
-             <div className="bg-gradient-to-b from-yellow-500/20 via-slate-900/90 to-slate-950 border-2 border-yellow-500/50 p-1 rounded-3xl shadow-[0_0_50px_rgba(234,179,8,0.2)] overflow-hidden">
+             {/* TARJETA DE GANADOR */}
+             <div className="bg-gradient-to-b from-yellow-500/20 via-slate-900/90 to-slate-950 border-2 border-yellow-500/50 p-1 rounded-3xl shadow-[0_0_50px_rgba(234,179,8,0.2)] overflow-hidden relative z-20">
                <div className="bg-slate-950/50 rounded-[22px] p-6 backdrop-blur-sm relative overflow-hidden">
                   
                   <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#fbbf24_1px,transparent_1px)] [background-size:16px_16px]"></div>
 
                   <div className="relative z-10 flex flex-col items-center text-center">
-                    {/* Corona más pequeña y pegada */}
                     <motion.div 
-                      initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.5 }}
+                      initial={{ y: -20, opacity: 0 }} 
+                      animate={{ y: 0, opacity: 1 }} 
+                      transition={{ delay: 0.5 }}
                       className="mb-2"
                     >
                       <Crown className="w-16 h-16 text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.6)]" />
@@ -1321,7 +1375,6 @@ const WinnerReveal = ({ winner, cat, isAdmin, onReveal, isRevealed }: any) => {
                       Ganador Indiscutible
                     </div>
 
-                    {/* Título más compacto */}
                     <motion.h2 
                       initial={{ scale: 2, opacity: 0, filter: "blur(10px)" }}
                       animate={{ scale: 1, opacity: 1, filter: "blur(0px)" }}
@@ -1331,14 +1384,13 @@ const WinnerReveal = ({ winner, cat, isAdmin, onReveal, isRevealed }: any) => {
                       {winner?.title || "Nadie"}
                     </motion.h2>
 
-                    {/* IMAGEN / VIDEO INTERACTIVO */}
                     <motion.div 
                       initial={{ y: 20, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
                       transition={{ delay: 0.6 }}
                       className="w-full aspect-video rounded-xl overflow-hidden border border-yellow-500/30 shadow-2xl mb-6 bg-slate-900 relative group"
                     >
-                         {/* Si hay URL, lo envolvemos en un link */}
+                         {/* ENLACE DE VIDEO */}
                          {winner?.url ? (
                            <a 
                              href={winner.url} 
@@ -1347,8 +1399,6 @@ const WinnerReveal = ({ winner, cat, isAdmin, onReveal, isRevealed }: any) => {
                              className="block w-full h-full relative cursor-pointer"
                            >
                              <NominationThumbnail nom={winner} categoryType={cat.type} size="large" />
-                             
-                             {/* Overlay de Play al pasar el mouse o siempre visible */}
                              <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
                                 <div className="bg-red-600/90 text-white rounded-full p-4 shadow-lg group-hover:scale-110 transition-transform flex items-center gap-2">
                                   <Play fill="currentColor" size={24} />
@@ -1357,14 +1407,15 @@ const WinnerReveal = ({ winner, cat, isAdmin, onReveal, isRevealed }: any) => {
                              </div>
                            </a>
                          ) : (
-                           // Si no es video, solo la imagen estática
                            <NominationThumbnail nom={winner} categoryType={cat.type} size="large" />
                          )}
                     </motion.div>
 
                     {winner && (
                       <motion.div 
-                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }}
+                        initial={{ opacity: 0 }} 
+                        animate={{ opacity: 1 }} 
+                        transition={{ delay: 1 }}
                         className="inline-flex items-center gap-2 px-4 py-1 bg-yellow-500/10 rounded-full border border-yellow-500/20"
                       >
                         <Users size={14} className="text-yellow-400" />
@@ -1382,9 +1433,23 @@ const WinnerReveal = ({ winner, cat, isAdmin, onReveal, isRevealed }: any) => {
 };
 
 // --- GALA VIEW PRINCIPAL (ESPACIADO REDUCIDO) ---
+// --- GALA VIEW PRINCIPAL (CON DELAY DRAMÁTICO) ---
 const GalaView = ({ categories, nominations, isAdmin }: any) => {
   const [revealed, setRevealed] = useState<string[]>([]);
-  const { addToast } = React.useContext(ToastContext);
+  const [showEndgame, setShowEndgame] = useState(false); // Nuevo estado para el delay
+  
+  // Verificar si TODO ha sido revelado
+  const allRevealed = categories.length > 0 && revealed.length === categories.length;
+
+  // EFECTO DELAY: Esperar 8 segundos antes de mostrar el final
+  useEffect(() => {
+    if (allRevealed) {
+      const timer = setTimeout(() => {
+        setShowEndgame(true);
+      }, 8000); // 8000ms = 8 segundos de espera
+      return () => clearTimeout(timer);
+    }
+  }, [allRevealed]);
 
   const getWinner = (catId: string) => {
     const cands = nominations.filter((n: any) => n.categoryId === catId && n.approved);
@@ -1392,45 +1457,95 @@ const GalaView = ({ categories, nominations, isAdmin }: any) => {
     return cands.reduce((max: any, n: any) => max.votes_count > n.votes_count ? max : n);
   };
 
-  const handleReveal = (catId: string, catName: string) => {
+  const handleReveal = (catId: string) => {
     setRevealed(prev => [...prev, catId]);
   };
 
-  return (
-    <div className="max-w-4xl mx-auto space-y-20 pb-32"> {/* Reducido de space-y-32 a 20 */}
-      <div className="text-center space-y-4 mb-8"> {/* Margen inferior reducido */}
-        <h1 className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-yellow-500 animate-pulse">
-          LA GRAN GALA
-        </h1>
-        <p className="text-slate-400 text-xl">El momento de la verdad ha llegado.</p>
+  // --- OVERLAY FINAL ---
+  const EndgameOverlay = () => (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 2 }} // Entrada muy suave (2 segundos)
+      className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/95 backdrop-blur-xl p-6 text-center overflow-hidden"
+    >
+      {/* Fondo animado */}
+      <div className="absolute inset-0 opacity-30">
+         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-pink-900/50 via-slate-950 to-black animate-pulse-slow"></div>
+         {[...Array(20)].map((_, i) => (
+            <motion.div 
+               key={i}
+               initial={{ y: '100vh', x: Math.random() * 100 - 50 + 'vw', opacity: 0, rotate: 0 }}
+               animate={{ y: '-10vh', opacity: [0, 1, 0], rotate: 360 }}
+               transition={{ duration: Math.random() * 5 + 5, repeat: Infinity, ease: "linear", delay: Math.random() * 5 }}
+               className="absolute text-pink-500/30"
+            >
+               <Mushroom size={Math.random() * 30 + 20} />
+            </motion.div>
+         ))}
       </div>
 
-      {categories.map((cat: any) => {
-        const winner = getWinner(cat.id);
-        const isRevealed = revealed.includes(cat.id);
-
-        return (
-          <div key={cat.id} className="relative scroll-mt-24">
-            <div className="text-center mb-6"> {/* Margen reducido */}
-               <div className="inline-block px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-2">
-                 Categoría
-               </div>
-               <h3 className="text-3xl md:text-4xl font-black text-white uppercase italic text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-400">
-                 {cat.name}
-               </h3>
+      <motion.div 
+        initial={{ scale: 0.8, y: 50, opacity: 0 }}
+        animate={{ scale: 1, y: 0, opacity: 1 }}
+        transition={{ type: "spring", bounce: 0.5, delay: 0.5 }}
+        className="relative z-10 max-w-2xl"
+      >
+         <div className="flex justify-center mb-6">
+            <Trophy className="w-24 h-24 text-yellow-400 drop-shadow-[0_0_30px_rgba(250,204,21,0.8)] animate-bounce-slow" />
+         </div>
+         <GlitchTextAnimated text="¡GRACIAS POR PARTICIPAR!" size="text-5xl md:text-7xl" />
+         
+         <p className="text-xl md:text-2xl text-slate-300 mt-8 leading-relaxed">
+            Estos fueron los <strong className="text-pink-400">Hongo Awards 2025</strong>.
+            <br/>Gracias a cada uno de ustedes por hacer de esta comunidad la más increíble (y cringe) de internet.
+         </p>
+         
+         <div className="mt-12 flex flex-col items-center gap-4">
+            <p className="text-slate-500 text-sm uppercase tracking-widest font-bold">Nos vemos el próximo año</p>
+            <div className="flex gap-4 text-pink-500/50">
+               <Mushroom size={32} /><Mushroom size={40} /><Mushroom size={32} />
             </div>
-            
-            <WinnerReveal 
-              winner={winner} 
-              cat={cat} 
-              isAdmin={isAdmin} 
-              isRevealed={isRevealed}
-              onReveal={() => handleReveal(cat.id, cat.name)} 
-            />
-          </div>
-        );
-      })}
-    </div>
+         </div>
+      </motion.div>
+    </motion.div>
+  );
+
+  return (
+    <>
+      {/* Muestra el overlay SOLO si showEndgame es true (después de los 8s) */}
+      <AnimatePresence>
+         {showEndgame && <EndgameOverlay />}
+      </AnimatePresence>
+
+      <div className="max-w-4xl mx-auto space-y-20 pb-32 relative z-0">
+        <div className="text-center space-y-4 mb-8">
+          <h1 className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-yellow-500 animate-pulse">
+            LA GRAN GALA
+          </h1>
+          <p className="text-slate-400 text-xl">El momento de la verdad ha llegado.</p>
+        </div>
+
+        {categories.map((cat: any) => {
+          const winner = getWinner(cat.id);
+          const isRevealed = revealed.includes(cat.id);
+
+          return (
+            <div key={cat.id} className="relative scroll-mt-24">
+              <div className="text-center mb-6">
+                <div className="inline-block px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-2">Categoría</div>
+                <h3 className="text-3xl md:text-4xl font-black text-white uppercase italic text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-400">{cat.name}</h3>
+              </div>
+              
+              <WinnerReveal 
+                winner={winner} cat={cat} isAdmin={isAdmin} isRevealed={isRevealed}
+                onReveal={() => handleReveal(cat.id)} 
+              />
+            </div>
+          );
+        })}
+      </div>
+    </>
   );
 };
 
